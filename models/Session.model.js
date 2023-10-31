@@ -4,6 +4,8 @@ const sessionSchema = new Schema({
   isActive: {
     default: true,
   },
+  name: String,
+  user: [{ type: Schema.Types.ObjectId, ref: "User" }],
 });
 
 module.exports = model("Session", sessionSchema);
