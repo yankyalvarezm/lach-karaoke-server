@@ -12,7 +12,7 @@ const saltRounds = 10;
 
 // -------------- Sign Up ------------------
 router.post("/signup", (req, res, next) => {
-  console.log('Line 15 - Received request body:', req.body);
+  console.log("Line 15 - Received request body:", req.body);
 
   const { name, lastname, email, telephone, password, admin } = req.body;
 
@@ -48,7 +48,7 @@ router.post("/signup", (req, res, next) => {
         res.status(400).json({ success: false, msg: "User already exists" });
         return;
       }
-      console.log('Line 51 - Password value before hashing:', password);
+      console.log("Line 51 - Password value before hashing:", password);
 
       const salt = bcrypt.genSaltSync(saltRounds);
       const hashedPassword = bcrypt.hashSync(password, salt);
@@ -70,7 +70,7 @@ router.post("/signup", (req, res, next) => {
       console.log(err);
       res.status(500).json({ success: false, msg: "Internal Server Error" });
     });
-    console.log('Line 73 - Received request body:', req.body);
+  console.log("Line 73 - Received request body:", req.body);
 });
 
 // -------------- Log In ------------------
@@ -120,12 +120,10 @@ router.post("/login", (req, res, next) => {
     );
 });
 
-router.get('/verify', isAuthenticated, (req, res, next) => {     
- 
+router.get("/verify", isAuthenticated, (req, res, next) => {
   console.log("req.user", req.user);
- 
+
   res.status(200).json(req.user);
 });
-
 
 module.exports = router;
