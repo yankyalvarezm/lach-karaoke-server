@@ -2,7 +2,7 @@ const { Schema, model } = require("mongoose");
 
 const sessionSchema = new Schema({
   isActive: {
-    type: Boolean,
+    type: Boolean, // Added type boolean because it was causing issues.
     default: true,
   },
   name: String,
