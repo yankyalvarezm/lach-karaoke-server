@@ -108,7 +108,7 @@ router.post("/login", (req, res, next) => {
         });
 
         // Send the token as the response
-        res.status(200).json({ success: true, authToken });
+        res.status(200).json({ success: true, authToken, foundUser });
       } else {
         res
           .status(401)
