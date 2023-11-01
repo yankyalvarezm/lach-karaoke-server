@@ -6,7 +6,7 @@ const sessionSchema = new Schema({
     default: true,
   },
   name: String,
-  user: { type: Schema.Types.ObjectId, ref: "User"}, // Changed this from array to a single reference to the user that created it.
+  users: [{ type: Schema.Types.ObjectId, ref: "User"}], // Changed this from array to a single reference to the user that created it.
 });
 
 module.exports = model("Session", sessionSchema);

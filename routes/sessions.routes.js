@@ -3,7 +3,7 @@ const Session = require("../models/Session.model");
 const isAuthenticated = require("../middleware/isAuthenticated");
 var router = express.Router();
 
-/* GET users listing. */
+/* GET all Sessions */
 router.get("/", (req, res, next) => {
   Session.find()
     .then((foundSessions) => {
@@ -21,36 +21,30 @@ router.get("/", (req, res, next) => {
         });
     });
 });
-
-// Need to ask if changing the model from array was correct.
-// router.post("/create", isAuthenticated, (req, res, next) => {
-//   const { name } = req.body;
-//   const userId = req.user._id;
-//   Session.create({
-//     name,
-//   })
-//     .then((createdSession) => {
-//       return Session.findByIdAndUpdate(
-//         createdSession._id,
-//         { $addToSet: { user: userId } },
-//         { new: true }
-//       );
-//     })
-//     .then((newSession) => {
-
-//       res.status(201).json({success: true, session: newSession});
-//     })
-//     .catch((error) => {
-//       res.status(400).json({ success: false, error, message: "Unable to create Session." });
-//     });
-// });
-
+/* GET selected Session */
+router.get("/:sessionId", (req, res, next) => {
+  const {sessionId} = req.params
+  Session.findById(sessionId)
+    .then((foundSession) => {
+      !foundSession
+        ? res.status(200).json({ success: true, message: "Session not found." })
+        : res.status(200).json({ success: true, session: foundSession });
+    })
+    .catch((error) => {
+      res
+        .status(400)
+        .json({
+          success: false,
+          error,
+          message: "Error trying to find Session.",
+        });
+    });
+});
+/* POST given a name, create a new Session */
 router.post("/create", isAuthenticated, (req, res, next) => {
   const { name } = req.body;
-  const userId = req.user._id;
   Session.create({
-    name,
-    user: userId,
+    name
   })
     .then((createdSession) => {
       res.status(201).json({ success: true, session: createdSession });
@@ -62,13 +56,12 @@ router.post("/create", isAuthenticated, (req, res, next) => {
     });
 });
 
+/* PUT given a new name, update an existing Session name */
 router.put("/update/:sessionId", isAuthenticated, (req, res, next) => {
   const { name } = req.body;
   const { sessionId } = req.params;
-  const { userId } = req.user._id;
   Session.findByIdAndUpdate(sessionId, {
     name,
-    user: userId,
   }, {new: true})
     .then((updatedSession) => {
       res.status(201).json({ success: true, session: updatedSession });
@@ -79,6 +72,36 @@ router.put("/update/:sessionId", isAuthenticated, (req, res, next) => {
         .json({ success: false, error, message: "Unable to update Session." });
     });
 });
+
+/* POST given a userId, add a user to the Session */
+router.post('/add/:userId', isAuthenticated, (req,res,next) =>{
+  const { sessionId } = req.params;
+  Session.findByIdAndUpdate(sessionId, {$addToSet: {users:userId}}, {new: true})
+    .then((updatedSession) => {
+      res.status(201).json({ success: true, session: updatedSession });
+    })
+    .catch((error) => {
+      res
+        .status(400)
+        .json({ success: false, error, message: "Unable to add user to Session." });
+    });
+})
+
+/* POST given a userId, remove a user from the Session */
+router.post('/remove/:userId', isAuthenticated, (req,res,next) =>{
+  const { sessionId } = req.params;
+  Session.findByIdAndUpdate(sessionId, {$pull: {users:userId}}, {new: true})
+    .then((updatedSession) => {
+      res.status(201).json({ success: true, session: updatedSession });
+    })
+    .catch((error) => {
+      res
+        .status(400)
+        .json({ success: false, error, message: "Unable to remove user from Session." });
+    });
+})
+
+/* Delete given a sessionId, delete the Session */
 router.delete("/delete/:sessionId", (req, res, next) => {
   const { sessionId } = req.params;
   Session.findByIdAndDelete(sessionId)
