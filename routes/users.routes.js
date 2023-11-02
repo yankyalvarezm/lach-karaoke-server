@@ -132,7 +132,7 @@ router.delete("/delete/playlist/:playlistId", isAuthenticated, (req, res, next) 
       });
   }
 );
-/* DELETE  */
+/* DELETE will delete user with the id given from the token in the middlewear*/
 router.delete("/delete", isAuthenticated, (req, res, next) => {
   const userId = req.user._id;
   User.findByIdAndDelete(userId)
