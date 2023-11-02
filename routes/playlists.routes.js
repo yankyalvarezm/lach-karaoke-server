@@ -80,10 +80,60 @@ router.post("/create", isAuthenticated, (req, res, next) => {
     });
 });
 
+/* POST given a songId add a song to user playlist. */
+router.post("/add", isAuthenticated, (req, res, next) => {
+  const { songId } = req.body;
+  const { playlistId } = req.user.playlist;
+  Playlist.findByIdAndUpdate(
+    playlistId,
+    {
+      $addToSet: { songs: songId },
+    },
+    { new: true }
+  )
+    .then((updatedPlaylist) => {
+      !updatedPlaylist
+        ? res.status(400).json({ success: false, message: "Playlist not found." })
+        : res.status(200).json({ success: true, playlist: updatedPlaylist });
+    })
+    .catch((error) => {
+      res.status(400).json({
+        success: false,
+        error,
+        message: "Error: Unable to add song to playlist in POST",
+      });
+    });
+});
+
+/* POST given a songId remove a song from user playlist. */
+router.post("/remove", isAuthenticated, (req, res, next) => {
+  const { songId } = req.body;
+  const { playlistId } = req.user.playlist;
+  Playlist.findByIdAndUpdate(
+    playlistId,
+    {
+      $pull: { songs: songId },
+    },
+    { new: true }
+  )
+    .then((updatedPlaylist) => {
+      !updatedPlaylist
+        ? res.status(400).json({ success: false, message: "Playlist not found." })
+        : res.status(200).json({ success: true, playlist: updatedPlaylist });
+    })
+    .catch((error) => {
+      res.status(400).json({
+        success: false,
+        error,
+        message: "Error: Unable to remove song from playlist in POST",
+      });
+    });
+});
+
 /* PUT given a name, the selected playlist name will be updated. */
-router.put("/update/:playlistId", isAuthenticated, (req, res, next) => {
+router.put("/update", isAuthenticated, (req, res, next) => {
   const { name } = req.body;
-  const { playlistId } = req.params;
+  const playlistId = req.user.playlist;
   Playlist.findByIdAndUpdate(
     playlistId,
     {
@@ -104,8 +154,8 @@ router.put("/update/:playlistId", isAuthenticated, (req, res, next) => {
 });
 
 /* DELETE given a playlistId, said playlist will be deleted and erased from the user playlist. */
-router.delete("/delete/:playlistId", isAuthenticated, (req, res, next) => {
-  const { playlistId } = req.params;
+router.delete("/delete", isAuthenticated, (req, res, next) => {
+  const playlistId = req.user.playlist;
   const userId = req.user._id;
   User.findByIdAndUpdate(userId, { playlist: undefined }, { new: true })
     .then((updatedUser) => {
