@@ -5,14 +5,6 @@ const isAuthenticated = require("../middleware/isAuthenticated");
 var router = express.Router();
 
 
-router.get("/:userId", (req,res,next) => {
-    const {userId} = req.params
-    User.findById(userId)
-    .populate("playlist")
-    .then(foundUser => {
-
-    })
-})
 
 /* POST create a playlist for the user. */
 router.post("/create", isAuthenticated, (req, res, next) => {
@@ -55,7 +47,7 @@ router.post("/create", isAuthenticated, (req, res, next) => {
   });
   
   /* DELETE given a playlistId, said playlist will be deleted and erased from the user playlist. */
-  router.delete("/delete/playlist/:playlistId", isAuthenticated, (req, res, next) => {
+  router.delete("/delete/:playlistId", isAuthenticated, (req, res, next) => {
       const { playlistId } = req.params;
       const userId = req.user._id;
       User.findByIdAndUpdate(userId, { playlist: undefined }, { new: true })

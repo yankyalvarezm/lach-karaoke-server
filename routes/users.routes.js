@@ -21,6 +21,22 @@ router.get("/", (req, res, next) => {
     });
 });
 
+/*GET a user given a userId and populate playlist*/
+router.get("/:userId", (req, res, next) => {
+  const { userId } = req.params;
+  User.findById(userId)
+    .populate("playlist")
+    .then((foundUser) => {
+      foundUser
+        ? res.status(200).json({ success: true, user: foundUser })
+        : res.status(400).json({ success: false, message: "User Not Found." });
+    })
+    .catch(error => {
+      console.log(error);
+      res.status(400).json({ success: false, message: "Error: Unable to GET User." });
+    })
+});
+
 /* PUT given name, lastname, email, telephone and password it will update the User's properties. */
 router.put("/update", isAuthenticated, (req, res, next) => {
   const { name, lastname, email, telephone, password } = req.body;
@@ -140,13 +156,11 @@ router.delete("/delete", isAuthenticated, (req, res, next) => {
       res.status(200).json({ seuccess: true, user: deletedUser });
     })
     .catch((error) => {
-      res
-        .status(400)
-        .json({
-          success: false,
-          error,
-          message: "Error: Unable to DELETE user.",
-        });
+      res.status(400).json({
+        success: false,
+        error,
+        message: "Error: Unable to DELETE user.",
+      });
     });
 });
 
