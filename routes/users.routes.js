@@ -4,7 +4,7 @@ const Playlist = require("../models/Playlist.model");
 const isAuthenticated = require("../middleware/isAuthenticated");
 var router = express.Router();
 
-/* GET users listing. */
+/* GET all users. */
 router.get("/", (req, res, next) => {
   User.find()
     .then((foundUsers) => {
@@ -21,12 +21,20 @@ router.get("/", (req, res, next) => {
     });
 });
 
-/* GET users listing. */
+/* PUT given name, lastname, email, telephone and password it will update the User's properties. */
 router.put("/update", isAuthenticated, (req, res, next) => {
   const { name, lastname, email, telephone, password } = req.body;
   const userId = req.user._id;
-  if(name ==='' ||  lastname ==='' ||  email ==='' ||  telephone ==='' ||  password ==='' ){
-    res.status(400).json({success: true, message: "Error: All fields must not be empty."})
+  if (
+    name === "" ||
+    lastname === "" ||
+    email === "" ||
+    telephone === "" ||
+    password === ""
+  ) {
+    res
+      .status(400)
+      .json({ success: true, message: "Error: All fields must not be empty." });
   }
   User.findByIdAndUpdate(
     userId,
@@ -46,11 +54,11 @@ router.put("/update", isAuthenticated, (req, res, next) => {
       res.status(400).json({
         success: false,
         error,
-        message:
-          "Error: Unable to update user in POST",
+        message: "Error: Unable to update user in POST",
       });
     });
 });
+
 /* POST create a playlist for the user. */
 router.post("/create/playlist", isAuthenticated, (req, res, next) => {
   const { name } = req.body;
@@ -86,17 +94,60 @@ router.post("/create/playlist", isAuthenticated, (req, res, next) => {
       res.status(400).json({
         success: false,
         error,
-        message: "Error: Unable to create playlist",
+        message: "Error: Unable to create playlist in POST",
       });
     });
 });
-/* GET users listing. */
-router.get("/", (req, res, next) => {
-  res.send("respond with a resource");
-});
-/* GET users listing. */
-router.get("/", (req, res, next) => {
-  res.send("respond with a resource");
+
+/* DELETE given a playlistId, said playlist will be deleted and erased from the user playlist. */
+router.delete("/delete/playlist/:playlistId", isAuthenticated, (req, res, next) => {
+    const { playlistId } = req.params;
+    const userId = req.user._id;
+    User.findByIdAndUpdate(userId, { playlist: undefined }, { new: true })
+      .then((updatedUser) => {
+        Playlist.findByIdAndDelete(playlistId)
+          .then((deletedPlaylist) => {
+            console.log("UPDATED USER PLAYLIST =====>", updatedUser);
+            console.log("DELETED PLAYLIST =====>", deletedPlaylist);
+            res.status(200).json({
+              success: true,
+              user: updatedUser,
+              playlist: deletedPlaylist,
+            });
+          })
+          .catch((error) => {
+            res.status(400).json({
+              success: false,
+              error,
+              message: "Error: Unable to DELETE playlist.",
+            });
+          });
+      })
+      .catch((error) => {
+        res.status(400).json({
+          success: false,
+          error,
+          message: "Error: Unable to remove playlist from User in DELETE.",
+        });
+      });
+  }
+);
+/* DELETE  */
+router.delete("/delete", isAuthenticated, (req, res, next) => {
+  const userId = req.user._id;
+  User.findByIdAndDelete(userId)
+    .then((deletedUser) => {
+      res.status(200).json({ seuccess: true, user: deletedUser });
+    })
+    .catch((error) => {
+      res
+        .status(400)
+        .json({
+          success: false,
+          error,
+          message: "Error: Unable to DELETE user.",
+        });
+    });
 });
 
 module.exports = router;
