@@ -17,29 +17,61 @@ router.get("/", (req, res, next) => {
         .json({
           success: false,
           error,
-          message: "Unable to Find any Session.",
+          message: "Error: Unable to GET any Sessions.",
         });
     });
 });
-/* GET selected Session */
+/* GET selected Session */ //Old
+// router.get("/:sessionId", (req, res, next) => {
+//   const {sessionId} = req.params
+//   Session.findById(sessionId)
+//     .then((foundSession) => {
+//       !foundSession
+//         ? res.status(200).json({ success: true, message: "Session not found." })
+//         : res.status(200).json({ success: true, session: foundSession });
+//     })
+//     .catch((error) => {
+//       res
+//         .status(400)
+//         .json({
+//           success: false,
+//           error,
+//           message: "Error trying to find Session.",
+//         });
+//     });
+// });
+
+/* GET selected Session and populate users if users exist */
 router.get("/:sessionId", (req, res, next) => {
-  const {sessionId} = req.params
+  const { sessionId } = req.params;
   Session.findById(sessionId)
     .then((foundSession) => {
-      !foundSession
-        ? res.status(200).json({ success: true, message: "Session not found." })
-        : res.status(200).json({ success: true, session: foundSession });
+      if (!foundSession) {
+        res.status(200).json({ success: true, message: "Session not found." });
+      } else {
+        if (foundSession.users.length) {
+          return foundSession.populate("users");
+        } else {
+          return foundSession;
+        }
+      }
+    })
+    .then(foundSession => {
+      if (!foundSession) {
+        res.status(200).json({ success: true, message: "Session not found." });
+      } else{
+        res.status(200).json({ success: true, session: foundSession })
+      }
     })
     .catch((error) => {
-      res
-        .status(400)
-        .json({
-          success: false,
-          error,
-          message: "Error trying to find Session.",
-        });
+      res.status(400).json({
+        success: false,
+        error,
+        message: "Error: Unable to GET Session.",
+      });
     });
 });
+
 /* POST given a name, create a new Session */
 router.post("/create", isAuthenticated, (req, res, next) => {
   const { name } = req.body;
@@ -52,7 +84,7 @@ router.post("/create", isAuthenticated, (req, res, next) => {
     .catch((error) => {
       res
         .status(400)
-        .json({ success: false, error, message: "Unable to create Session." });
+        .json({ success: false, error, message: "Error: Unable to create Session in POST." });
     });
 });
 
@@ -69,7 +101,7 @@ router.put("/update/:sessionId", isAuthenticated, (req, res, next) => {
     .catch((error) => {
       res
         .status(400)
-        .json({ success: false, error, message: "Unable to update Session." });
+        .json({ success: false, error, message: "Error: Unable to update Session in PUT." });
     });
 });
 
@@ -83,7 +115,7 @@ router.post('/add/:userId', isAuthenticated, (req,res,next) =>{
     .catch((error) => {
       res
         .status(400)
-        .json({ success: false, error, message: "Unable to add user to Session." });
+        .json({ success: false, error, message: "Error: Unable to add user to Session in POST." });
     });
 })
 
@@ -97,7 +129,7 @@ router.post('/remove/:userId', isAuthenticated, (req,res,next) =>{
     .catch((error) => {
       res
         .status(400)
-        .json({ success: false, error, message: "Unable to remove user from Session." });
+        .json({ success: false, error, message: "Error: Unable to remove user from Session in POST." });
     });
 })
 
@@ -111,7 +143,7 @@ router.delete("/delete/:sessionId", (req, res, next) => {
     .catch((error) => {
       res
         .status(400)
-        .json({ success: false, error, message: "Unable to delete Session." });
+        .json({ success: false, error, message: "Error: Unable to delete Session in DELETE." });
     });
 });
 
