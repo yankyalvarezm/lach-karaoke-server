@@ -73,9 +73,8 @@ router.get("/:sessionId", (req, res, next) => {
 });
 
 /* POST given a name, create a new Session */
-router.post("/create", isAuthenticated, (req, res, next) => {
+router.post("/create", isAuthenticated, async (req, res, next) => { 
   const { name } = req.body;
-
   // Comprueba si el nombre está vacío o es solo espacios en blanco
   if (!name || !name.trim()) {
     return res.status(400).json({
@@ -83,28 +82,41 @@ router.post("/create", isAuthenticated, (req, res, next) => {
       message: "Session name cannot be empty."
     });
   }
-
-  Session.create({ name })
-    .then((createdSession) => {
-      res.status(201).json({ success: true, session: createdSession, message: 'Session created' });
-    })
-    .catch((error) => {
-      res
-        .status(400)
-        .json({ success: false, error, message: "Error: Unable to create Session in POST." });
-        console.log("Error:", error);
+  try {
+    // Buscar una sesión activa
+    const activeSession = await Session.findOne({ isActive: true });
+    // Si existe una sesión activa, devolvemos un error
+    if (activeSession) {
+      return res.status(400).json({
+        success: false,
+        message: "No puedes crear una sesion, mientras tengas una sesion activa"
+      });
+    }
+    // Si no hay ninguna sesión activa, crea la nueva sesión
+    const createdSession = await Session.create({ name });
+    return res.status(201).json({
+      success: true,
+      session: createdSession,
+      message: 'Session created'
     });
+  } catch (error) {
+    res
+      .status(400)
+      .json({ success: false, error, message: "Error: Unable to create Session in POST." });
+    console.log("Error:", error);
+  }
 });
 
 
 /* PUT given a new name, update an existing Session name */
 router.put("/update/:sessionId", isAuthenticated, (req, res, next) => {
-  const { name } = req.body;
+  const { name, isActive  } = req.body;
   const { sessionId } = req.params;
   Session.findByIdAndUpdate(
     sessionId,
     {
       name,
+      isActive 
     },
     { new: true }
   )

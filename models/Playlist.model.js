@@ -2,7 +2,7 @@ const { Schema, model } = require("mongoose");
 
 const playlistSchema = new Schema(
   {
-    name: {type: String, default:"My Songs"},
+    name: { type: String, trim: true, default: "My Songs" },
     songs: [{ type: Schema.Types.ObjectId, ref: "Songs" }],
   },
   {
