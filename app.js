@@ -7,9 +7,11 @@ var mongoose = require("mongoose");
 var cors = require("cors");
 
 // var indexRouter = require("./routes/index.routes");
-var sessionsRouter = require("./routes/sessions.routes");
 var usersRouter = require("./routes/users.routes");
 var authRouter = require("./routes/auth.routes");
+var sessionsRouter = require("./routes/sessions.routes");
+var playlistsRouter = require("./routes/playlists.routes");
+var songsRouter = require("./routes/songs.routes");
 
 var app = express();
 
@@ -35,6 +37,8 @@ app.use(
 app.use("/users", usersRouter);
 app.use("/auth", authRouter);
 app.use("/sessions", sessionsRouter);
+app.use("/playlists", playlistsRouter);
+app.use("/songs", songsRouter);
 
 mongoose
   .connect(process.env.MONGODB_URI)
