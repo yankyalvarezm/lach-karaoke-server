@@ -8,6 +8,7 @@ const sessionSchema = new Schema(
     },
     name: { type: String, trim: true },
     users: [{ type: Schema.Types.ObjectId, ref: "User" }], // Changed this from array to a single reference to the user that created it.
+    duration: Number,
   },
   {
     timestamps: true,

@@ -72,6 +72,30 @@ router.get("/:sessionId", (req, res, next) => {
     });
 });
 
+/* GET Active session and populate users if users exist */
+router.get("/current/active", (req, res, next) => {
+  // Busca una sesión que está activa
+  Session.findOne({ isActive: true }) // Cambio aquí para buscar una sesión activa
+    .populate("users") 
+    .then((activeSession) => {
+      if (!activeSession) {
+        // Si no hay ninguna sesión activa
+        res.status(404).json({ success: false, message: "No active session found." });
+      } else {
+        // Si hay una sesión activa
+        res.status(200).json({ success: true, session: activeSession });
+      }
+    })
+    .catch((error) => {
+      res.status(500).json({
+        success: false,
+        error,
+        message: "Error: Unable to GET active session.",
+      });
+    });
+});
+
+
 /* POST given a name, create a new Session */
 router.post("/create", isAuthenticated, async (req, res, next) => { 
   const { name } = req.body;
@@ -110,25 +134,52 @@ router.post("/create", isAuthenticated, async (req, res, next) => {
 
 /* PUT given a new name, update an existing Session name */
 router.put("/update/:sessionId", isAuthenticated, (req, res, next) => {
-  const { name, isActive  } = req.body;
+  const { name, isActive } = req.body;
   const { sessionId } = req.params;
-  Session.findByIdAndUpdate(
-    sessionId,
-    {
-      name,
-      isActive 
-    },
-    { new: true }
-  )
-    .then((updatedSession) => {
-      res.status(201).json({ success: true, session: updatedSession });
-    })
-    .catch((error) => {
-      res
-        .status(400)
-        .json({ success: false, error, message: "Error: Unable to update Session in PUT." });
-    });
+
+  // Si la solicitud quiere activar una sesión
+  if (isActive) {
+    // Busca si ya hay una sesión activa
+    Session.findOne({ isActive: true })
+      .then((activeSession) => {
+        // Si hay una sesión activa y su ID es diferente al que se está actualizando
+        if (activeSession && activeSession._id.toString() !== sessionId) {
+          res.status(400).json({ success: false, message: "There's already an active session." });
+          return;
+        }
+
+        // Actualiza la sesión si no hay conflictos
+        return Session.findByIdAndUpdate(
+          sessionId,
+          { name, isActive },
+          { new: true }
+        );
+      })
+      .then((updatedSession) => {
+        if (updatedSession) {
+          res.status(201).json({ success: true, session: updatedSession });
+        }
+      })
+      .catch((error) => {
+        res.status(400).json({ success: false, error, message: "Error: Unable to update Session in PUT." });
+      });
+
+  } else {
+    // Si no se está activando una sesión, simplemente actualiza
+    Session.findByIdAndUpdate(
+      sessionId,
+      { name, isActive },
+      { new: true }
+    )
+      .then((updatedSession) => {
+        res.status(201).json({ success: true, session: updatedSession });
+      })
+      .catch((error) => {
+        res.status(400).json({ success: false, error, message: "Error: Unable to update Session in PUT." });
+      });
+  }
 });
+
 
 /* POST given a userId, add a user to the Session */
 router.post("/add/:userId", isAuthenticated, (req, res, next) => {
