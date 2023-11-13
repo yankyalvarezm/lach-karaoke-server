@@ -7,7 +7,7 @@ const userSchema = new Schema(
     email: { type: String, trim:true, unique: true, required: true },
     telephone: { type: String, trim:true, unique: true, required: true },
     password: { type: String, required: true },
-    playlist: { type: Schema.Types.ObjectId, ref: "Playlist" },
+    playlist: [{ type: Schema.Types.ObjectId, ref: "Playlist" }], // Change this to an array
     admin: {type: Boolean, default:false}, // Gave a default false to admin
   },
   {

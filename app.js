@@ -3,6 +3,7 @@ var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 
+
 var mongoose = require("mongoose");
 var cors = require("cors");
 
@@ -12,6 +13,9 @@ var authRouter = require("./routes/auth.routes");
 var sessionsRouter = require("./routes/sessions.routes");
 var playlistsRouter = require("./routes/playlists.routes");
 var songsRouter = require("./routes/songs.routes");
+var spotifyRouter = require("./routes/spotify.routes")
+var youtubeRouter = require("./routes/youtube.routes")
+var perfomRouter = require("./routes/perfom.routes")
 
 var app = express();
 
@@ -39,6 +43,10 @@ app.use("/auth", authRouter);
 app.use("/sessions", sessionsRouter);
 app.use("/playlists", playlistsRouter);
 app.use("/songs", songsRouter);
+app.use("/spotify", spotifyRouter)
+app.use("/youtube", youtubeRouter)
+app.use("/perform", perfomRouter)
+
 
 mongoose
   .connect(process.env.MONGODB_URI)

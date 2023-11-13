@@ -180,6 +180,36 @@ router.put("/update/:sessionId", isAuthenticated, (req, res, next) => {
   }
 });
 
+router.put("/end/:sessionId", isAuthenticated, (req, res, next) => {
+  const { duration } = req.body; 
+  const { sessionId } = req.params;
+
+  Session.findById(sessionId)
+    .then(session => {
+      if (!session) {
+        res.status(404).json({ success: false, message: "Session not found." });
+        return;
+      }
+
+      const updatedDuration = session.duration + duration;
+
+      return Session.findByIdAndUpdate(
+        sessionId,
+        { isActive: false, duration: updatedDuration },
+        { new: true }
+      );
+    })
+    .then(updatedSession => {
+      if (updatedSession) {
+        res.status(200).json({ success: true, session: updatedSession });
+      }
+    })
+    .catch(error => {
+      res.status(500).json({ success: false, error, message: "Error: Unable to end Session in PUT." });
+    });
+});
+
+
 
 /* POST given a userId, add a user to the Session */
 router.post("/add/:userId", isAuthenticated, (req, res, next) => {
@@ -188,7 +218,7 @@ router.post("/add/:userId", isAuthenticated, (req, res, next) => {
     sessionId,
     { $addToSet: { users: userId } },
     { new: true }
-  )
+  ) 
     .then((updatedSession) => {
       res.status(201).json({ success: true, session: updatedSession });
     })
