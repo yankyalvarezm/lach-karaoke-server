@@ -92,6 +92,7 @@ router.get("/current/active", (req, res, next) => {
         error,
         message: "Error: Unable to GET active session.",
       });
+      console.log('Active Session Error:', err)
     });
 });
 
