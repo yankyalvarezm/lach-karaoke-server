@@ -4,7 +4,7 @@ const { google } = require('googleapis')
 
 const youtube = google.youtube({
     version: 'v3',
-    auth: 'AIzaSyCWMPud9TLdJbIzHoDsaA0hqcJlUzXLo3s' 
+    auth: process.env.YOUTUBE_API_KEY 
   });
 
   router.get('/search/videos', (req, res) => {

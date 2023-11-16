@@ -253,6 +253,7 @@ router.delete("/delete/:sessionId", (req, res, next) => {
   const { sessionId } = req.params;
   Session.findByIdAndDelete(sessionId)
     .then((deletedSession) => {
+
       res.status(200).json({ success: true, session: deletedSession });
     })
     .catch((error) => {

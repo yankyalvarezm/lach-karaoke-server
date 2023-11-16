@@ -43,7 +43,6 @@ router.post('/add-perform', isAuthenticated, async (req, res) => {
     }
 });
 
-
 router.get('/my-songs', isAuthenticated, async (req, res) => {
     try {
         const sessionId = req.query.sessionId;
