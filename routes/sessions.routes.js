@@ -2,6 +2,7 @@ var express = require("express");
 const Session = require("../models/Session.model");
 const isAuthenticated = require("../middleware/isAuthenticated");
 var router = express.Router();
+const { getIo } = require('../socket');
 
 /* GET all Sessions */
 router.get("/", (req, res, next) => {
@@ -74,15 +75,18 @@ router.get("/:sessionId", (req, res, next) => {
 
 /* GET Active session and populate users if users exist */
 router.get("/current/active", (req, res, next) => {
+  const io = getIo();
   // Busca una sesión que está activa
   Session.findOne({ isActive: true }) // Cambio aquí para buscar una sesión activa
     .populate("users") 
     .then((activeSession) => {
       if (!activeSession) {
         // Si no hay ninguna sesión activa
+        io.emit('update_session', activeSession);
         res.status(404).json({ success: false, message: "No active session found." });
       } else {
         // Si hay una sesión activa
+        io.emit('update_session', activeSession);
         res.status(200).json({ success: true, session: activeSession });
       }
     })
@@ -137,6 +141,7 @@ router.post("/create", isAuthenticated, async (req, res, next) => {
 router.put("/update/:sessionId", isAuthenticated, (req, res, next) => {
   const { name, isActive } = req.body;
   const { sessionId } = req.params;
+  const io = getIo();
 
   // Si la solicitud quiere activar una sesión
   if (isActive) {
@@ -158,10 +163,12 @@ router.put("/update/:sessionId", isAuthenticated, (req, res, next) => {
       })
       .then((updatedSession) => {
         if (updatedSession) {
+          io.emit('update_session', updatedSession);
           res.status(201).json({ success: true, session: updatedSession });
         }
       })
       .catch((error) => {
+        console.log(error)
         res.status(400).json({ success: false, error, message: "Error: Unable to update Session in PUT." });
       });
 
@@ -173,9 +180,11 @@ router.put("/update/:sessionId", isAuthenticated, (req, res, next) => {
       { new: true }
     )
       .then((updatedSession) => {
+        io.emit('update_session', updatedSession);
         res.status(201).json({ success: true, session: updatedSession });
       })
       .catch((error) => {
+        console.log(error)
         res.status(400).json({ success: false, error, message: "Error: Unable to update Session in PUT." });
       });
   }
