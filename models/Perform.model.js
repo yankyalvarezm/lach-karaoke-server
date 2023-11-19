@@ -12,6 +12,10 @@ const perfomSchema = new Schema(
         session: { type: Schema.Types.ObjectId, ref: "Session" },
         user: { type: Schema.Types.ObjectId, ref: "User" },
         thumbnail: String,
+        isQueue: {
+            type: Boolean,
+            default: false,
+        }
     },
     {
         timestamps: true,

@@ -13,7 +13,8 @@ router.post('/add-perform', isAuthenticated, async (req, res) => {
 
         const existingPerfomsCount = await Perfom.countDocuments({
             user: userId,
-            session: sessionId
+            session: sessionId,
+            isQueue: false
         });
 
         if (existingPerfomsCount >= 2) {
@@ -43,6 +44,7 @@ router.post('/add-perform', isAuthenticated, async (req, res) => {
     }
 });
 
+
 router.get('/my-songs', isAuthenticated, async (req, res) => {
     try {
         const sessionId = req.query.sessionId;
@@ -51,15 +53,18 @@ router.get('/my-songs', isAuthenticated, async (req, res) => {
         const perfoms = await Perfom.find({
             user: userId,
             session: sessionId,
-            status: 'hold'
+            isQueue: false
         }).populate('user', 'name'); 
 
+
         res.status(200).json({ success: true, data: perfoms });
+        
     } catch (error) {
         console.error('Error al buscar perfoms:', error);
         res.status(500).json({ success: false, message: "Error al buscar perfoms", error });
     }
 });
+
 
 router.delete('/deletesong/:perfomId', isAuthenticated, async (req, res) => {
     try {
@@ -84,6 +89,52 @@ router.delete('/deletesong/:perfomId', isAuthenticated, async (req, res) => {
         res.status(500).json({ success: false, message: "Error al eliminar perfom", error });
     }
 });
+
+router.put('/queue-perform/:perfomId', isAuthenticated, async (req, res) => {
+    const perfomId = req.params.perfomId;
+
+    try {
+        const perfom = await Perfom.findById(perfomId);
+        if (!perfom) {
+            return res.status(404).json({ success: false, message: "Perfom no encontrado." });
+        }
+
+        const session = await Session.findById(perfom.session);
+        if (!session || !session.isActive) {
+            return res.status(400).json({ success: false, message: "La sesión asociada no está activa." });
+        }
+
+        perfom.isQueue = true;
+        await perfom.save();
+
+        res.status(200).json({ success: true, message: "Perfom actualizado a la cola.", data: perfom });
+    } catch (error) {
+        console.error('Error al actualizar el estado de Perfom:', error);
+        res.status(500).json({ success: false, message: "Error al actualizar el estado de Perfom.", error });
+    }
+});
+
+
+
+router.get('/queue-songs', isAuthenticated, async (req, res) => {
+    try {
+        const sessionId = req.query.sessionId;
+
+        const perfoms = await Perfom.find({
+            session: sessionId,
+            isQueue: true 
+        }).populate('user', 'name');  
+
+        res.status(200).json({ success: true, data: perfoms });
+    } catch (error) {
+        console.error('Error al buscar perfoms en la cola:', error);
+        res.status(500).json({ success: false, message: "Error al buscar perfoms en la cola", error });
+    }
+});
+
+
+
+
 
 
 module.exports = router;
