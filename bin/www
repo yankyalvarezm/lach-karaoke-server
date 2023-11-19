@@ -9,7 +9,6 @@ var debug = require('debug')('express-no-views-configuration:server');
 var http = require('http');
 var { init } = require('../socket');
 
-
 /**
  * Get port from environment and store in Express.
  */

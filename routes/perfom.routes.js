@@ -4,6 +4,7 @@ const Session = require('../models/Session.model')
 const Perfom = require("../models/Perform.model")
 const isAuthenticated = require("../middleware/isAuthenticated");
 var router = express.Router();
+const { getIo } = require('../socket');
 
 
 router.post('/add-perform', isAuthenticated, async (req, res) => {
@@ -43,7 +44,6 @@ router.post('/add-perform', isAuthenticated, async (req, res) => {
         res.status(500).json({ success: false, message: "Error al crear el registro", error });
     }
 });
-
 
 router.get('/my-songs', isAuthenticated, async (req, res) => {
     try {
@@ -114,9 +114,9 @@ router.put('/queue-perform/:perfomId', isAuthenticated, async (req, res) => {
     }
 });
 
-
-
 router.get('/queue-songs', isAuthenticated, async (req, res) => {
+    const io = getIo();
+
     try {
         const sessionId = req.query.sessionId;
 
@@ -125,16 +125,12 @@ router.get('/queue-songs', isAuthenticated, async (req, res) => {
             isQueue: true 
         }).populate('user', 'name');  
 
+        io.emit('update_queue', perfoms);
         res.status(200).json({ success: true, data: perfoms });
     } catch (error) {
         console.error('Error al buscar perfoms en la cola:', error);
         res.status(500).json({ success: false, message: "Error al buscar perfoms en la cola", error });
     }
 });
-
-
-
-
-
 
 module.exports = router;
