@@ -134,6 +134,7 @@ router.get('/queue-songs', isAuthenticated, async (req, res) => {
 
 // Ruta para actualizar el estado de un Perfom
 router.put('/update-perfom/:perfomId', isAuthenticated, async (req, res) => {
+    const io = getIo();
     try {
         const { isPlaying, isPlayed } = req.body;
         const perfomId = req.params.perfomId;
@@ -147,7 +148,7 @@ router.put('/update-perfom/:perfomId', isAuthenticated, async (req, res) => {
         if (!updatedPerfom) {
             return res.status(404).json({ success: false, message: "Perfom no encontrado." });
         }
-
+        io.emit('update_perform', updatedPerfom);
         res.status(200).json({ success: true, data: updatedPerfom });
     } catch (error) {
         console.error('Error al actualizar el estado del Perfom:', error);
