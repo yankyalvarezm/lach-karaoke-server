@@ -13,11 +13,11 @@ const youtube = google.youtube({
     youtube.search.list({
         part: 'snippet',
         q: query,
+        videoEmbeddable: 'any',
         maxResults: 20
-    }, (err, response) => {
+    }, async (err, response) => {
         if (err) {
             console.error('Error en la búsqueda de videos de YouTube:', err); 
-            
             res.status(500).json({
                 success: false,
                 message: 'Error al realizar la búsqueda en YouTube',
@@ -25,9 +25,32 @@ const youtube = google.youtube({
             });
             return;
         }
-        res.json(response.data); 
+
+        // Filtrar los resultados para obtener solo videos incrustables
+        const videos = response.data.items;
+        const embeddableVideos = [];
+
+        for (const video of videos) {
+            try {
+                const videoDetails = await youtube.videos.list({
+                    part: 'status',
+                    id: video.id.videoId
+                });
+
+                if (videoDetails.data.items[0].status.embeddable) {
+                    embeddableVideos.push(video);
+                }
+            } catch (error) {
+                console.error('Error al obtener detalles del video:', error);
+                console.log('error:', error)
+                // Manejar el error según sea necesario
+            }
+        }
+
+        res.json({ items: embeddableVideos });
     });
 });
+
 
   router.get('/video/details', (req, res) => {
     const videoId = req.query.id; 

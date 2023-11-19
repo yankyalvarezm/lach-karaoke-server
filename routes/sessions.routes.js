@@ -100,7 +100,6 @@ router.get("/current/active", (req, res, next) => {
     });
 });
 
-
 /* POST given a name, create a new Session */
 router.post("/create", isAuthenticated, async (req, res, next) => { 
   const { name } = req.body;

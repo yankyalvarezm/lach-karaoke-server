@@ -15,6 +15,14 @@ const perfomSchema = new Schema(
         isQueue: {
             type: Boolean,
             default: false,
+        },
+        isPlaying: {
+            type: Boolean,
+            default: false,
+        },
+        isPlayed: {
+            type: Boolean,
+            default: false,
         }
     },
     {

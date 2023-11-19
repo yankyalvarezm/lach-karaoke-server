@@ -6,7 +6,6 @@ const isAuthenticated = require("../middleware/isAuthenticated");
 var router = express.Router();
 const { getIo } = require('../socket');
 
-
 router.post('/add-perform', isAuthenticated, async (req, res) => {
     try {
         const { name, videoDuration, videoId, status, session: sessionId, thumbnail } = req.body;
@@ -55,7 +54,6 @@ router.get('/my-songs', isAuthenticated, async (req, res) => {
             session: sessionId,
             isQueue: false
         }).populate('user', 'name'); 
-
 
         res.status(200).json({ success: true, data: perfoms });
         
@@ -122,7 +120,8 @@ router.get('/queue-songs', isAuthenticated, async (req, res) => {
 
         const perfoms = await Perfom.find({
             session: sessionId,
-            isQueue: true 
+            isQueue: true,
+            isPlayed: false
         }).populate('user', 'name');  
 
         io.emit('update_queue', perfoms);
@@ -132,5 +131,29 @@ router.get('/queue-songs', isAuthenticated, async (req, res) => {
         res.status(500).json({ success: false, message: "Error al buscar perfoms en la cola", error });
     }
 });
+
+// Ruta para actualizar el estado de un Perfom
+router.put('/update-perfom/:perfomId', isAuthenticated, async (req, res) => {
+    try {
+        const { isPlaying, isPlayed } = req.body;
+        const perfomId = req.params.perfomId;
+
+        const updatedPerfom = await Perfom.findByIdAndUpdate(
+            perfomId,
+            { $set: { isPlaying, isPlayed } },
+            { new: true }
+        );
+
+        if (!updatedPerfom) {
+            return res.status(404).json({ success: false, message: "Perfom no encontrado." });
+        }
+
+        res.status(200).json({ success: true, data: updatedPerfom });
+    } catch (error) {
+        console.error('Error al actualizar el estado del Perfom:', error);
+        res.status(500).json({ success: false, message: "Error al actualizar el estado del Perfom", error });
+    }
+});
+
 
 module.exports = router;
