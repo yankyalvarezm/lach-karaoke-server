@@ -63,7 +63,6 @@ router.get('/my-songs', isAuthenticated, async (req, res) => {
     }
 });
 
-
 router.delete('/deletesong/:perfomId', isAuthenticated, async (req, res) => {
     try {
         const perfomId = req.params.perfomId;
@@ -155,6 +154,5 @@ router.put('/update-perfom/:perfomId', isAuthenticated, async (req, res) => {
         res.status(500).json({ success: false, message: "Error al actualizar el estado del Perfom", error });
     }
 });
-
 
 module.exports = router;
