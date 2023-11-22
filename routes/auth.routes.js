@@ -11,7 +11,6 @@ const TempUser = require("../models/TempUser.model");
 const isAuthenticated = require("../middleware/isAuthenticated");
 
 const saltRounds = 10;
-const globalSalt = bcrypt.genSaltSync(saltRounds);
 
 
 const cleanupInterval1min = 60 * 1000; // Cleanup every 60 seconds
@@ -38,8 +37,8 @@ router.get("/generate-code", (req, res, next) => {
     code.push(chars.charAt(Math.floor(Math.random() * chars.length)));
   }
   genCode = code.join("");
-  // const salt = bcrypt.genSaltSync(saltRounds);
-  const genCodeHash = bcrypt.hashSync(genCode, globalSalt);
+  const salt = bcrypt.genSaltSync(saltRounds);
+  const genCodeHash = bcrypt.hashSync(genCode, salt);
   console.log(genCodeHash);
   RandomCode.create({
     genCode,
@@ -65,15 +64,11 @@ router.get("/generate-code", (req, res, next) => {
 // -------------- Sign Up ------------------
 router.post("/signup/temp-user", (req, res, next) => {
   const { name, lastname, admin, code } = req.body;
-  console.log(code);
 
   if (name === "" || lastname === "" || code === "") {
     res.status(400).json({ success: false, msg: "All fields required" });
     return;
   }
-  // const salt = bcrypt.genSaltSync(saltRounds);
-  const hashedCode = bcrypt.hashSync(code, globalSalt);
-  console.log(hashedCode);
   RandomCode.find({ genCode: { $regex: /.*/ } })
 
     .then((foundCode) => {
