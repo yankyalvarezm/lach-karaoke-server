@@ -5,12 +5,111 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const User = require("../models/User.model");
+const RandomCode = require("../models/RandomCode.model");
+const TempUser = require("../models/TempUser.model");
 
 const isAuthenticated = require("../middleware/isAuthenticated");
 
 const saltRounds = 10;
+const globalSalt = bcrypt.genSaltSync(saltRounds);
+
+
+const cleanupInterval1min = 60 * 1000; // Cleanup every 60 seconds
+const cleanupInterval24h = 24 * 60 * 60 * 1000 // Cleanup every 24 hours
+
+setInterval(async () => {
+  try {
+    await TempUser.deleteMany({});
+  } catch (error) {
+    console.error('Error deleting documents:', error);
+  }
+}, cleanupInterval1min);
+
+
+setInterval(async () => {
+  const expirationTime = new Date(Date.now() - cleanupInterval1min);
+  await RandomCode.deleteMany({ createdAt: { $lt: expirationTime } });
+}, cleanupInterval1min);
+
+router.get("/generate-code", (req, res, next) => {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = [];
+  for (let i = 0; i < 5; i++) {
+    code.push(chars.charAt(Math.floor(Math.random() * chars.length)));
+  }
+  genCode = code.join("");
+  // const salt = bcrypt.genSaltSync(saltRounds);
+  const genCodeHash = bcrypt.hashSync(genCode, globalSalt);
+  console.log(genCodeHash);
+  RandomCode.create({
+    genCode,
+    genCodeHash,
+  })
+    .then((codeGenerated) => {
+      console.log(
+        "Code ===>",
+        genCode,
+        "\nHashed Code ===>",
+        genCodeHash,
+        "\nMongoDB Document ===>",
+        codeGenerated
+      );
+      res.status(200).json({ genCode });
+    })
+    .catch((error) => {
+      console.error("Error creating document:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    });
+});
 
 // -------------- Sign Up ------------------
+router.post("/signup/temp-user", (req, res, next) => {
+  const { name, lastname, admin, code } = req.body;
+  console.log(code);
+
+  if (name === "" || lastname === "" || code === "") {
+    res.status(400).json({ success: false, msg: "All fields required" });
+    return;
+  }
+  // const salt = bcrypt.genSaltSync(saltRounds);
+  const hashedCode = bcrypt.hashSync(code, globalSalt);
+  console.log(hashedCode);
+  RandomCode.find({ genCode: { $regex: /.*/ } })
+
+    .then((foundCode) => {
+      console.log(foundCode);
+      if (!foundCode || foundCode.length === 0) {
+        // If the user is not found, send an error response
+        res.status(401).json({ message: "Incorrect code." });
+        return;
+      }
+      const correctHash = bcrypt.compareSync(code, foundCode[0].genCodeHash);
+      console.log(correctHash);
+      if (!correctHash) {
+        // If the user is not found, send an error response
+        res.status(401).json({ message: "Incorrect code." });
+        return;
+      }
+      TempUser.create({
+        name,
+        lastname,
+        admin,
+      }).then((createdTempUser) => {
+        const { name, lastname, admin, _id } = createdTempUser;
+        const payload = { name, lastname, admin, _id };
+        // Create and sign the token
+        const authToken = jwt.sign(payload, process.env.SECRET, {
+          algorithm: "HS256",
+          expiresIn: "24h",
+        });
+        res.status(200).json({ success: true, authToken, user: payload });
+      });
+    })
+    .catch((err) =>
+      res.status(500).json({ success: false, msg: "Internal Server Error" })
+    );
+});
+
 router.post("/signup", (req, res, next) => {
   console.log("Line 15 - Received request body:", req.body);
 
