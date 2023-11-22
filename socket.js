@@ -2,19 +2,23 @@
 let io;
 
 const init = (server) => {
-  const socketIo = require('socket.io');
+  const socketIo = require("socket.io");
   io = socketIo(server, {
     cors: {
       origin: [process.env.REACT_APP_URI],
-      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
-    }
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    },
   });
 
   io.on("connection", (socket) => {
     console.log(`Socket user Connected:, ${socket.id}`);
-  
+
     socket.on("update_session", (data) => {
-      console.log('Socket Session:', data);
+      console.log("Socket Session:", data);
+    });
+
+    socket.on("toggleIsRunning", (data) => {
+      io.emit("toggleIsRunning", data);
     });
   });
 
@@ -23,7 +27,7 @@ const init = (server) => {
 
 const getIo = () => {
   if (!io) {
-    throw new Error('Socket.io not initialized!');
+    throw new Error("Socket.io not initialized!");
   }
   return io;
 };
