@@ -12,7 +12,8 @@ const isAuthenticated = require("../middleware/isAuthenticated");
 
 const saltRounds = 10;
 
-const cleanupInterval1min = 60 * 60 * 1000; // Cleanup every 60 seconds
+const cleanupInterval1m = 60 * 1000; // Cleanup every 60 seconds
+const cleanupInterval1h = 60 * 60 * 1000; // Cleanup every 60 seconds
 const cleanupInterval24h = 24 * 60 * 60 * 1000; // Cleanup every 24 hours
 
 setInterval(async () => {
@@ -21,12 +22,12 @@ setInterval(async () => {
   } catch (error) {
     console.error("Error deleting documents:", error);
   }
-}, cleanupInterval1min);
+}, cleanupInterval1h);
 
 setInterval(async () => {
   const expirationTime = new Date(Date.now() - cleanupInterval1min);
   await RandomCode.deleteMany({ createdAt: { $lt: expirationTime } });
-}, cleanupInterval1min);
+}, cleanupInterval1h);
 
 router.get("/generate-code", (req, res, next) => {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -38,6 +39,7 @@ router.get("/generate-code", (req, res, next) => {
   const salt = bcrypt.genSaltSync(saltRounds);
   const genCodeHash = bcrypt.hashSync(genCode, salt);
   console.log(genCodeHash);
+  // RandomCode.deleteMany({})
   RandomCode.create({
     genCode,
     genCodeHash,
@@ -72,10 +74,10 @@ router.post("/signup/temp-user", (req, res, next) => {
   RandomCode.findOne({ genCode: signUpCode })
 
     .then((foundCode) => {
-      // console.log(foundCode);
-      // console.log("HERE 1");
+      console.log(foundCode);
       if (!foundCode) {
-        // If the user is not found, send an error response
+        console.log("HERE 1");
+        // If the Code is not found, send an error response
         res.status(401).json({ message: "Incorrect code." });
         return;
       }
