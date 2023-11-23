@@ -12,18 +12,16 @@ const isAuthenticated = require("../middleware/isAuthenticated");
 
 const saltRounds = 10;
 
-
-const cleanupInterval1min = 60 * 1000; // Cleanup every 60 seconds
-const cleanupInterval24h = 24 * 60 * 60 * 1000 // Cleanup every 24 hours
+const cleanupInterval1min = 60 * 60 * 1000; // Cleanup every 60 seconds
+const cleanupInterval24h = 24 * 60 * 60 * 1000; // Cleanup every 24 hours
 
 setInterval(async () => {
   try {
     await TempUser.deleteMany({});
   } catch (error) {
-    console.error('Error deleting documents:', error);
+    console.error("Error deleting documents:", error);
   }
 }, cleanupInterval1min);
-
 
 setInterval(async () => {
   const expirationTime = new Date(Date.now() - cleanupInterval1min);
@@ -63,32 +61,35 @@ router.get("/generate-code", (req, res, next) => {
 
 // -------------- Sign Up ------------------
 router.post("/signup/temp-user", (req, res, next) => {
-  const { name, lastname, admin, code } = req.body;
+  const { name, lastname, signUpCode } = req.body;
 
-  if (name === "" || lastname === "" || code === "") {
+  if (name === "" || lastname === "" || signUpCode === "") {
     res.status(400).json({ success: false, msg: "All fields required" });
     return;
   }
-  RandomCode.find({ genCode: { $regex: /.*/ } })
+  console.log("signUpCode",signUpCode);
+  // RandomCode.find({ genCode: { $regex: `[*${signUpCode}]`, $options: "i" } })
+  RandomCode.findOne({ genCode: signUpCode })
 
     .then((foundCode) => {
-      console.log(foundCode);
-      if (!foundCode || foundCode.length === 0) {
+      // console.log(foundCode);
+      // console.log("HERE 1");
+      if (!foundCode) {
         // If the user is not found, send an error response
         res.status(401).json({ message: "Incorrect code." });
         return;
       }
-      const correctHash = bcrypt.compareSync(code, foundCode[0].genCodeHash);
-      console.log(correctHash);
-      if (!correctHash) {
-        // If the user is not found, send an error response
-        res.status(401).json({ message: "Incorrect code." });
-        return;
-      }
+      // const correctHash = bcrypt.compareSync(signUpCode, foundCode[0].genCodeHash);
+      // if (!correctHash) {
+      //   console.log("HERE 2");
+      //   // If the user is not found, send an error response
+      //   // If the user is 2ot found, send an error response
+      //   res.status(401).json({ message: "Incorrect code." });
+      //   return;
+      // }
       TempUser.create({
         name,
-        lastname,
-        admin,
+        lastname
       }).then((createdTempUser) => {
         const { name, lastname, admin, _id } = createdTempUser;
         const payload = { name, lastname, admin, _id };
