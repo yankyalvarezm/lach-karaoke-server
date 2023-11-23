@@ -9,6 +9,7 @@ var cors = require("cors");
 
 // var indexRouter = require("./routes/index.routes");
 var usersRouter = require("./routes/users.routes");
+var tempUsersRouter = require("./routes/tempusers.routes");
 var authRouter = require("./routes/auth.routes");
 var sessionsRouter = require("./routes/sessions.routes");
 var playlistsRouter = require("./routes/playlists.routes");
@@ -38,6 +39,7 @@ app.use(
     cors()
   );
 app.use("/users", usersRouter);
+app.use("/tempusers", tempUsersRouter);
 app.use("/auth", authRouter);
 app.use("/sessions", sessionsRouter);
 app.use("/playlists", playlistsRouter);
