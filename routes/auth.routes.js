@@ -53,11 +53,11 @@ router.get("/generate-code", (req, res, next) => {
         "\nMongoDB Document ===>",
         codeGenerated
       );
-      res.status(200).json({ genCode });
+      res.status(200).json({ success: true, genCode });
     })
     .catch((error) => {
       console.error("Error creating document:", error);
-      res.status(500).json({ error: "Internal Server Error" });
+      res.status(500).json({ success: false, error: "Internal Server Error" });
     });
 });
 
@@ -69,7 +69,7 @@ router.post("/signup/temp-user", (req, res, next) => {
     res.status(400).json({ success: false, msg: "All fields required" });
     return;
   }
-  console.log("signUpCode",signUpCode);
+  console.log("signUpCode", signUpCode);
   // RandomCode.find({ genCode: { $regex: `[*${signUpCode}]`, $options: "i" } })
   RandomCode.findOne({ genCode: signUpCode })
 
@@ -91,7 +91,7 @@ router.post("/signup/temp-user", (req, res, next) => {
       // }
       TempUser.create({
         name,
-        lastname
+        lastname,
       }).then((createdTempUser) => {
         const { name, lastname, admin, _id } = createdTempUser;
         const payload = { name, lastname, admin, _id };

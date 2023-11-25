@@ -11,6 +11,6 @@ const randomCodeSchema = new Schema(
   }
 );
 
-randomCodeSchema.index({ genCodeHash: 1 }, { expireAfterSeconds: 5 });
+randomCodeSchema.index({ genCodeHash: 1 }, { expireAfterSeconds: 60 });
 
 module.exports = model("RandomCode", randomCodeSchema);
