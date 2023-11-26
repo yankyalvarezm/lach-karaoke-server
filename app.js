@@ -29,15 +29,15 @@ app.use(express.static(path.join(__dirname, "public")));
 app.set("trust proxy", 1);
 app.enable("trust proxy");
 
-app.use(
-  cors({
-    origin: "https://cantico.netlify.app", 
-  })
-);
-
 // app.use(
-//     cors()
-//   );
+//   cors({
+//     origin: "https://cantico.netlify.app", 
+//   })
+// );
+
+app.use(
+    cors()
+  );
 app.use("/users", usersRouter);
 app.use("/tempusers", tempUsersRouter);
 app.use("/auth", authRouter);

@@ -5,7 +5,7 @@ const init = (server) => {
   const socketIo = require("socket.io");
   io = socketIo(server, {
     cors: {
-      origin: "https://cantico.netlify.app",
+      origin: process.env.REACT_APP_URI,
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
       credentials: true,
     },
