@@ -29,15 +29,15 @@ app.use(express.static(path.join(__dirname, "public")));
 app.set("trust proxy", 1);
 app.enable("trust proxy");
 
-// app.use(
-//   cors({
-//     origin: [process.env.REACT_APP_URI], 
-//   })
-// );
-
 app.use(
-    cors()
-  );
+  cors({
+    origin: [process.env.REACT_APP_URI], 
+  })
+);
+
+// app.use(
+//     cors()
+//   );
 app.use("/users", usersRouter);
 app.use("/tempusers", tempUsersRouter);
 app.use("/auth", authRouter);
