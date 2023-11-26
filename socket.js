@@ -2,9 +2,7 @@
 let io;
 
 const init = (server) => {
-  const socketIo = require("socket.io")(server, {
-    maxHttpBufferSize: 1e7, 
-  });
+  const socketIo = require("socket.io");
   io = socketIo(server, {
     cors: {
       origin: "https://cantico.netlify.app",
