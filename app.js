@@ -31,7 +31,7 @@ app.enable("trust proxy");
 
 app.use(
   cors({
-    origin: [process.env.REACT_APP_URI], 
+    origin: "https://cantico.netlify.app", 
   })
 );
 
