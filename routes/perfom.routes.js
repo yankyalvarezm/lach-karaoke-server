@@ -1,5 +1,6 @@
 var express = require("express");
 const User = require("../models/User.model");
+const TempUser = require('../models/TempUser.model');
 const Session = require('../models/Session.model')
 const Perfom = require("../models/Perform.model")
 const isAuthenticated = require("../middleware/isAuthenticated");
@@ -117,11 +118,19 @@ router.get('/queue-songs', isAuthenticated, async (req, res) => {
     try {
         const sessionId = req.query.sessionId;
 
-        const perfoms = await Perfom.find({
+        let perfoms = await Perfom.find({
             session: sessionId,
             isQueue: true,
             isPlayed: false
-        }).populate('user', 'name');  
+        }).populate('user', 'name');
+
+        // En caso de que 'user' sea null, intenta con 'tempUser'
+        perfoms = await Promise.all(perfoms.map(async (perfom) => {
+            if (!perfom.user) {
+                perfom = await perfom.populate('tempUser', 'name').execPopulate();
+            }
+            return perfom;
+        }));
 
         io.emit('update_queue', perfoms);
         res.status(200).json({ success: true, data: perfoms });
@@ -130,6 +139,7 @@ router.get('/queue-songs', isAuthenticated, async (req, res) => {
         res.status(500).json({ success: false, message: "Error al buscar perfoms en la cola", error });
     }
 });
+
 
 // Ruta para actualizar el estado de un Perfom
 router.put('/update-perfom/:perfomId', isAuthenticated, async (req, res) => {

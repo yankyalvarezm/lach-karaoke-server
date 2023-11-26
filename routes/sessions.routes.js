@@ -96,7 +96,7 @@ router.get("/current/active", (req, res, next) => {
         error,
         message: "Error: Unable to GET active session.",
       });
-      console.log("Active Session Error:", err);
+      console.log("Active Session Error:", error);
     });
 });
 
@@ -129,13 +129,11 @@ router.post("/create", isAuthenticated, async (req, res, next) => {
       message: "Session created",
     });
   } catch (error) {
-    res
-      .status(400)
-      .json({
-        success: false,
-        error,
-        message: "Error: Unable to create Session in POST.",
-      });
+    res.status(400).json({
+      success: false,
+      error,
+      message: "Error: Unable to create Session in POST.",
+    });
     console.log("Error:", error);
   }
 });
@@ -153,12 +151,10 @@ router.put("/update/:sessionId", isAuthenticated, (req, res, next) => {
       .then((activeSession) => {
         // Si hay una sesión activa y su ID es diferente al que se está actualizando
         if (activeSession && activeSession._id.toString() !== sessionId) {
-          res
-            .status(400)
-            .json({
-              success: false,
-              message: "There's already an active session.",
-            });
+          res.status(400).json({
+            success: false,
+            message: "There's already an active session.",
+          });
           return;
         }
 
@@ -177,13 +173,11 @@ router.put("/update/:sessionId", isAuthenticated, (req, res, next) => {
       })
       .catch((error) => {
         console.log(error);
-        res
-          .status(400)
-          .json({
-            success: false,
-            error,
-            message: "Error: Unable to update Session in PUT.",
-          });
+        res.status(400).json({
+          success: false,
+          error,
+          message: "Error: Unable to update Session in PUT.",
+        });
       });
   } else {
     // Si no se está activando una sesión, simplemente actualiza
@@ -194,13 +188,11 @@ router.put("/update/:sessionId", isAuthenticated, (req, res, next) => {
       })
       .catch((error) => {
         console.log(error);
-        res
-          .status(400)
-          .json({
-            success: false,
-            error,
-            message: "Error: Unable to update Session in PUT.",
-          });
+        res.status(400).json({
+          success: false,
+          error,
+          message: "Error: Unable to update Session in PUT.",
+        });
       });
   }
 });
@@ -230,13 +222,11 @@ router.put("/end/:sessionId", isAuthenticated, (req, res, next) => {
       }
     })
     .catch((error) => {
-      res
-        .status(500)
-        .json({
-          success: false,
-          error,
-          message: "Error: Unable to end Session in PUT.",
-        });
+      res.status(500).json({
+        success: false,
+        error,
+        message: "Error: Unable to end Session in PUT.",
+      });
     });
 });
 
@@ -252,13 +242,11 @@ router.post("/add/:userId", isAuthenticated, (req, res, next) => {
       res.status(201).json({ success: true, session: updatedSession });
     })
     .catch((error) => {
-      res
-        .status(400)
-        .json({
-          success: false,
-          error,
-          message: "Error: Unable to add user to Session in POST.",
-        });
+      res.status(400).json({
+        success: false,
+        error,
+        message: "Error: Unable to add user to Session in POST.",
+      });
     });
 });
 
@@ -274,13 +262,11 @@ router.post("/remove/:userId", isAuthenticated, (req, res, next) => {
       res.status(201).json({ success: true, session: updatedSession });
     })
     .catch((error) => {
-      res
-        .status(400)
-        .json({
-          success: false,
-          error,
-          message: "Error: Unable to remove user from Session in POST.",
-        });
+      res.status(400).json({
+        success: false,
+        error,
+        message: "Error: Unable to remove user from Session in POST.",
+      });
     });
 });
 
@@ -292,13 +278,11 @@ router.delete("/delete/:sessionId", (req, res, next) => {
       res.status(200).json({ success: true, session: deletedSession });
     })
     .catch((error) => {
-      res
-        .status(400)
-        .json({
-          success: false,
-          error,
-          message: "Error: Unable to delete Session in DELETE.",
-        });
+      res.status(400).json({
+        success: false,
+        error,
+        message: "Error: Unable to delete Session in DELETE.",
+      });
     });
 });
 

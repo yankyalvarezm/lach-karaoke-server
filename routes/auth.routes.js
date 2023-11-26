@@ -25,7 +25,7 @@ setInterval(async () => {
 }, cleanupInterval1h);
 
 setInterval(async () => {
-  const expirationTime = new Date(Date.now() - cleanupInterval1min);
+  const expirationTime = new Date(Date.now() - cleanupInterval1h);
   await RandomCode.deleteMany({ createdAt: { $lt: expirationTime } });
 }, cleanupInterval1h);
 

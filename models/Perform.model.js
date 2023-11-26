@@ -11,6 +11,7 @@ const perfomSchema = new Schema(
         },
         session: { type: Schema.Types.ObjectId, ref: "Session" },
         user: { type: Schema.Types.ObjectId, ref: "User" },
+        tempUser: { type: Schema.Types.ObjectId, ref: "TempUser" },
         thumbnail: String,
         isQueue: {
             type: Boolean,
