@@ -1,11 +1,11 @@
 // socket.js
 let io;
-
+let isRunning = false;
 const init = (server) => {
   const socketIo = require("socket.io");
   io = socketIo(server, {
     cors: {
-      origin: "https://cantico.netlify.app",
+      origin: process.env.REACT_APP_URI,
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
       credentials: true,
     },
@@ -19,8 +19,13 @@ const init = (server) => {
     });
 
     socket.on("toggleIsRunning", (data) => {
+      isRunning=data.isRunning
       io.emit("toggleIsRunning", data);
     });
+
+    socket.on("getIsRunning", () => {
+      io.emit("getIsRunning", {isRunning})
+    })
   });
 
   return io;

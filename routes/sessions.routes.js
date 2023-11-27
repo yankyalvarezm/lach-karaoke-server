@@ -322,5 +322,25 @@ router.put("/toggle-has-started/:sessionId", async (req, res) => {
     res.status(500).send({ message: error.message });
   }
 });
+router.put("/set-session-has-started/:sessionId", async (req, res) => {
+  const io = getIo();
+
+  try {
+    const sessionId = req.params.sessionId;
+    const session = await Session.findById(sessionId);
+
+    if (!session) {
+      return res.status(404).send({ message: "Session not found" });
+    }
+
+    session.hasStarted = req.body.hasStarted;
+    await session.save();
+
+    io.emit("updated_time", session.hasStarted);
+    res.status(200).send(session);
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
 
 module.exports = router;

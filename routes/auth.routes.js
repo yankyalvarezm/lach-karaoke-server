@@ -25,9 +25,9 @@ setInterval(async () => {
 }, cleanupInterval1h);
 
 setInterval(async () => {
-  const expirationTime = new Date(Date.now() - cleanupInterval1min);
+  const expirationTime = new Date(Date.now() - cleanupInterval24h);
   await RandomCode.deleteMany({ createdAt: { $lt: expirationTime } });
-}, cleanupInterval1h);
+}, cleanupInterval24h);
 
 router.get("/generate-code", (req, res, next) => {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -93,8 +93,8 @@ router.post("/signup/temp-user", (req, res, next) => {
         name,
         lastname,
       }).then((createdTempUser) => {
-        const { name, lastname, admin, _id } = createdTempUser;
-        const payload = { name, lastname, admin, _id };
+        const { userType, name, lastname, admin, _id } = createdTempUser;
+        const payload = { userType ,name, lastname, admin, _id };
         // Create and sign the token
         const authToken = jwt.sign(payload, process.env.SECRET, {
           algorithm: "HS256",
@@ -193,10 +193,10 @@ router.post("/login", (req, res, next) => {
 
       if (passwordCorrect) {
         // Deconstruct the user object to omit the password
-        const { name, lastname, email, telephone, admin, _id } = foundUser;
+        const { userType, name, lastname, email, telephone, admin, _id } = foundUser;
 
         // Create an object that will be set as the token payload
-        const payload = { name, lastname, email, telephone, admin, _id };
+        const payload = { userType,name, lastname, email, telephone, admin, _id };
 
         // Create and sign the token
         const authToken = jwt.sign(payload, process.env.SECRET, {
