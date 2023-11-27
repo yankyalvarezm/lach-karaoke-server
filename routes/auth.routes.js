@@ -25,9 +25,9 @@ setInterval(async () => {
 }, cleanupInterval1h);
 
 setInterval(async () => {
-  const expirationTime = new Date(Date.now() - cleanupInterval1h);
+  const expirationTime = new Date(Date.now() - cleanupInterval24h);
   await RandomCode.deleteMany({ createdAt: { $lt: expirationTime } });
-}, cleanupInterval1h);
+}, cleanupInterval24h);
 
 router.get("/generate-code", (req, res, next) => {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";

@@ -2,6 +2,7 @@ var express = require("express");
 const User = require("../models/User.model");
 const Session = require("../models/Session.model");
 const Perfom = require("../models/Perform.model");
+const mongoose = require("mongoose")
 const isAuthenticated = require("../middleware/isAuthenticated");
 var router = express.Router();
 const { getIo } = require("../socket");
@@ -178,23 +179,23 @@ router.get("/queue-songs", isAuthenticated, async (req, res) => {
   try {
     const sessionId = req.query.sessionId;
     const userToUse = req.user.userType;
-    let perfoms = await Perfom.find({
-            session: sessionId,
-            isQueue: true,
-            isPlayed: false,
-          }).populate("user","tempUser");
+    let performs = await Perfom.find({
+      session: sessionId,
+      isQueue: true,
+      isPlayed: false,
+    }).populate("tempUser").populate("user")
     // En caso de que 'user' sea null, intenta con 'tempUser'
-    perfoms = await Promise.all(perfoms);
-    console.log("PERFORMS ====>", perfoms);
-    io.emit("update_queue", perfoms);
-    res.status(200).json({ success: true, data: perfoms });
+    performs = await Promise.all(performs);
+    console.log("PERFORMS ====>", performs);
+    io.emit("update_queue", performs);
+    res.status(200).json({ success: true, data: performs });
   } catch (error) {
-    console.error("Error al buscar perfoms en la cola:", error);
+    console.error("Error al buscar performs en la cola:", error);
     res
       .status(500)
       .json({
         success: false,
-        message: "Error al buscar perfoms en la cola",
+        message: "Error al buscar performs en la cola",
         error,
       });
   }
