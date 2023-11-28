@@ -1,6 +1,6 @@
 // socket.js
 let io;
-
+let isRunning = false;
 const init = (server) => {
   const socketIo = require("socket.io");
   io = socketIo(server, {
@@ -19,8 +19,13 @@ const init = (server) => {
     });
 
     socket.on("toggleIsRunning", (data) => {
+      isRunning=data.isRunning
       io.emit("toggleIsRunning", data);
     });
+
+    socket.on("getIsRunning", () => {
+      io.emit("getIsRunning", {isRunning})
+    })
   });
 
   return io;
