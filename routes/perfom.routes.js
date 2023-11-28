@@ -138,41 +138,57 @@ router.delete("/deletesong/:perfomId", isAuthenticated, async (req, res) => {
   
   
 
-router.put("/queue-perform/:perfomId", isAuthenticated, async (req, res) => {
-  const perfomId = req.params.perfomId;
+  router.put("/queue-perform/:perfomId", isAuthenticated, async (req, res) => {
+    const perfomId = req.params.perfomId;
 
-  try {
-    const perfom = await Perfom.findById(perfomId);
-    if (!perfom) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Perfom no encontrado." });
+    try {
+        const perfom = await Perfom.findById(perfomId);
+        if (!perfom) {
+            return res.status(404).json({ success: false, message: "Perfom no encontrado." });
+        }
+
+        const session = await Session.findById(perfom.session);
+        if (!session || !session.isActive) {
+            return res.status(400).json({
+                success: false,
+                message: "La sesión asociada no está activa.",
+            });
+        }
+
+        // Ajusta la consulta para incluir tanto user como tempUser.
+        const userPerfomsCount = await Perfom.countDocuments({
+            $or: [
+                { user: req.user._id },
+                { tempUser: req.user._id }
+            ],
+            session: perfom.session,
+            isQueue: true,
+            isPlayed: false,
+        });
+
+        if (userPerfomsCount >= session.maxQueueLimit) {
+            return res.status(400).json({
+                success: false,
+                message: "No puedes agregar más canciones a la cola.",
+            });
+        }
+
+        perfom.isQueue = true;
+        await perfom.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Perfom actualizado a la cola.",
+            data: perfom,
+        });
+    } catch (error) {
+        console.error("Error al actualizar el estado de Perfom:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error al actualizar el estado de Perfom.",
+            error,
+        });
     }
-
-    const session = await Session.findById(perfom.session);
-    if (!session || !session.isActive) {
-      return res.status(400).json({
-        success: false,
-        message: "La sesión asociada no está activa.",
-      });
-    }
-
-    perfom.isQueue = true;
-    await perfom.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Perfom actualizado a la cola.",
-      data: perfom,
-    });
-  } catch (error) {
-    console.error("Error al actualizar el estado de Perfom:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error al actualizar el estado de Perfom.",
-      error,
-    });
-  }
 });
 
 router.get("/queue-songs", isAuthenticated, async (req, res) => {
@@ -238,5 +254,25 @@ router.put("/update-perfom/:perfomId", isAuthenticated, async (req, res) => {
     });
   }
 });
+
+router.put("/session/:sessionId/updateMaxQueueLimit", isAuthenticated, async (req, res) => {
+    const { sessionId } = req.params;
+    const { maxQueueLimit } = req.body;
+  
+    try {
+      const session = await Session.findById(sessionId);
+      if (!session) {
+        return res.status(404).json({ success: false, message: "Sesión no encontrada." });
+      }
+  
+      session.maxQueueLimit = maxQueueLimit;
+      await session.save();
+  
+      res.status(200).json({ success: true, message: "Límite de cola actualizado.", data: session });
+    } catch (error) {
+      console.error("Error al actualizar el límite de cola:", error);
+      res.status(500).json({ success: false, message: "Error al actualizar el límite de cola.", error });
+    }
+  });
 
 module.exports = router;
