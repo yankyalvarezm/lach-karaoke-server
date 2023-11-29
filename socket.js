@@ -77,10 +77,10 @@ const init = (server) => {
     //   io.emit("update_queue", { queueSongs });
     // });
 
-    socket.on("requestQueueSongs", () => {
-      // Aquí emitirías el estado actual de queueSongs
-      io.emit("update_queue", queueSongs);
-    });
+    // socket.on("requestQueueSongs", () => {
+    //   // Aquí emitirías el estado actual de queueSongs
+    //   io.emit("update_queue", queueSongs);
+    // });
   });
 
   return io;
