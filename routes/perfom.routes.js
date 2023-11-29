@@ -211,7 +211,7 @@ router.get("/queue-songs", isAuthenticated, async (req, res) => {
         return perfom;
       }));
   
-      console.log("PERFORMS ====>", performs);
+      console.log("Emitiendo evento 'update_queue' con:", performs);
       io.emit("update_queue", performs);
       res.status(200).json({ success: true, data: performs });
     } catch (error) {
