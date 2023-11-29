@@ -191,6 +191,16 @@ router.delete("/deletesong/:perfomId", isAuthenticated, async (req, res) => {
     }
 });
 
+async function updateQueueSongs(sessionId) {
+    try {
+      let performs = await Perfom.find({ /* tus criterios de búsqueda */ });
+      performs = await Promise.all(/* tu lógica de populate */);
+      io.emit("update_queue", performs);
+    } catch (error) {
+      console.error("Error al actualizar la cola:", error);
+    }
+  }
+
 router.get("/queue-songs", isAuthenticated, async (req, res) => {
     const io = getIo();
     try {
@@ -212,7 +222,7 @@ router.get("/queue-songs", isAuthenticated, async (req, res) => {
       }));
   
       console.log("PERFORMS ====>", performs);
-      io.emit("update_queue", performs);
+      await updateQueueSongs(sessionId);
       res.status(200).json({ success: true, data: performs });
     } catch (error) {
       console.error("Error al buscar performs en la cola:", error);
