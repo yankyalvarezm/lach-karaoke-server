@@ -94,7 +94,7 @@ router.post("/signup/temp-user", (req, res, next) => {
         lastname,
       }).then((createdTempUser) => {
         const { userType, name, lastname, admin, _id } = createdTempUser;
-        const payload = { userType ,name, lastname, admin, _id };
+        const payload = { userType, name, lastname, admin, _id };
         // Create and sign the token
         const authToken = jwt.sign(payload, process.env.SECRET, {
           algorithm: "HS256",
@@ -193,10 +193,19 @@ router.post("/login", (req, res, next) => {
 
       if (passwordCorrect) {
         // Deconstruct the user object to omit the password
-        const { userType, name, lastname, email, telephone, admin, _id } = foundUser;
+        const { userType, name, lastname, email, telephone, admin, _id } =
+          foundUser;
 
         // Create an object that will be set as the token payload
-        const payload = { userType,name, lastname, email, telephone, admin, _id };
+        const payload = {
+          userType,
+          name,
+          lastname,
+          email,
+          telephone,
+          admin,
+          _id,
+        };
 
         // Create and sign the token
         const authToken = jwt.sign(payload, process.env.SECRET, {
@@ -218,9 +227,9 @@ router.post("/login", (req, res, next) => {
 });
 
 router.get("/verify", isAuthenticated, (req, res, next) => {
-  console.log("req.user", req.user);
+  console.log("verifyyyyy req.user", req.user);
 
-  res.status(200).json(req.user);
+  res.status(200).json({ user: req.user, success: true });
 });
 
 module.exports = router;

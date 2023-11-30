@@ -12,8 +12,8 @@ const isAuthenticated = async (req, res, next) => {
     req.user = tokenInfo;
     next();
   } catch (error) {
-    console.log(error.message, "Error.message");
-    return res.status(401).json(error);
+    console.log(error.message, "Token no valido");
+    return res.status(401).json({ error, success: false });
   }
 };
 
