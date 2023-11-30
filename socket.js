@@ -2,9 +2,9 @@
 let io;
 let isRunning = false;
 let activeSession = null;
-let queueSongs = null;
+// let queueSongs = null;
 
-const Perfom = require('./models/Perform.model')
+const Perfom = require("./models/Perform.model");
 const init = (server) => {
   const socketIo = require("socket.io");
   io = socketIo(server, {
@@ -44,6 +44,10 @@ const init = (server) => {
     });
     socket.on("getActiveSession", () => {
       io.emit("getActiveSession", { activeSession });
+    });
+
+    socket.on("toggleIsPlaying", (data) => {
+      io.emit("toggleIsPlaying", data);
     });
 
     // socket.on("requestQueueSongs", async () => {
