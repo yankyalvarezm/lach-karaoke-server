@@ -70,7 +70,7 @@ router.get("/generate-code", (req, res, next) => {
 router.post("/signup/temp-user", (req, res, next) => {
   const { name, signUpCode } = req.body;
 
-  if (name === "" || lastname === "" || signUpCode === "") {
+  if (name === "" || signUpCode === "") {
     res.status(400).json({ success: false, msg: "All fields required" });
     return;
   }
