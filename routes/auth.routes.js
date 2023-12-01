@@ -18,7 +18,8 @@ const cleanupInterval24h = 24 * 60 * 60 * 1000; // Cleanup every 24 hours
 
 setInterval(async () => {
   try {
-    await TempUser.deleteMany({});
+    const expirationTime = new Date(Date.now() - cleanupInterval24h);
+    await TempUser.deleteMany({ createdAt: {$lt: expirationTime}});
   } catch (error) {
     console.error("Error deleting documents:", error);
   }
@@ -28,6 +29,10 @@ setInterval(async () => {
   const expirationTime = new Date(Date.now() - cleanupInterval24h);
   await RandomCode.deleteMany({ createdAt: { $lt: expirationTime } });
 }, cleanupInterval24h);
+
+// setInterval(async () => {
+//   await RandomCode.deleteMany({ createdAt: { $lt: expirationTime } });
+// }, cleanupInterval24h);
 
 router.get("/generate-code", (req, res, next) => {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -63,7 +68,7 @@ router.get("/generate-code", (req, res, next) => {
 
 // -------------- Sign Up ------------------
 router.post("/signup/temp-user", (req, res, next) => {
-  const { name, lastname, signUpCode } = req.body;
+  const { name, signUpCode } = req.body;
 
   if (name === "" || lastname === "" || signUpCode === "") {
     res.status(400).json({ success: false, msg: "All fields required" });
@@ -91,10 +96,9 @@ router.post("/signup/temp-user", (req, res, next) => {
       // }
       TempUser.create({
         name,
-        lastname,
       }).then((createdTempUser) => {
-        const { userType, name, lastname, admin, _id } = createdTempUser;
-        const payload = { userType, name, lastname, admin, _id };
+        const { userType, name, admin, _id } = createdTempUser;
+        const payload = { userType, name, admin, _id };
         // Create and sign the token
         const authToken = jwt.sign(payload, process.env.SECRET, {
           algorithm: "HS256",
