@@ -36,15 +36,14 @@ router.get("/:songId", (req, res, next) => {
 
 /* POST given a title, artist and genre a new song will be created. */
 router.post("/create", (req, res, next) => {
-  const { title, artist, genre } = req.body;
+  const { title, description, videoId, thumbnailURL } = req.body;
   Songs.create(
     {
       title,
       description,
       videoId,
-      thumbnailURL
+      thumbnailURL,
     },
-    { new: true }
   )
     .then((createdSong) => {
       createdSong
@@ -65,8 +64,12 @@ router.post("/create", (req, res, next) => {
 /* PUT given a title, artist, genre and given an songId, update selected song. */
 router.put("/update/:songId", (req, res, next) => {
   const { songId } = req.params;
-  const { title, artist, genre } = req.body;
-  Songs.findByIdAndUpdate(songId, { title, artist, genre }, { new: true })
+  const { title, description, videoId, thumbnailURL } = req.body;
+  Songs.findByIdAndUpdate(
+    songId,
+    { title, description, videoId, thumbnailURL },
+    { new: true }
+  )
     .then((updatedSong) => {
       updatedSong
         ? res.status(200).json({ success: true, song: updatedSong })
