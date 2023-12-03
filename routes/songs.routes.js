@@ -1,9 +1,10 @@
 var express = require("express");
 const Songs = require("../models/Songs.model");
+const isAuthenticated = require("../middleware/isAuthenticated");
 var router = express.Router();
 
 /* GET all songs. */
-router.get("/", (req, res, next) => {
+router.get("/", isAuthenticated, (req, res, next) => {
   Songs.find()
     .then((foundSongs) => {
       foundSongs.length
@@ -19,7 +20,7 @@ router.get("/", (req, res, next) => {
     });
 });
 /* GET a song by songId. */
-router.get("/:songId", (req, res, next) => {
+router.get("/:songId", isAuthenticated, (req, res, next) => {
   const songId = req.params;
   Songs.findById(songId)
     .then((foundSong) => {
@@ -35,7 +36,7 @@ router.get("/:songId", (req, res, next) => {
 });
 
 /* POST given a title, artist and genre a new song will be created. */
-router.post("/create", (req, res, next) => {
+router.post("/create", isAuthenticated, (req, res, next) => {
   const { title, description, videoId, thumbnailURL } = req.body;
   Songs.create(
     {
@@ -62,7 +63,7 @@ router.post("/create", (req, res, next) => {
 });
 
 /* PUT given a title, artist, genre and given an songId, update selected song. */
-router.put("/update/:songId", (req, res, next) => {
+router.put("/update/:songId", isAuthenticated, (req, res, next) => {
   const { songId } = req.params;
   const { title, description, videoId, thumbnailURL } = req.body;
   Songs.findByIdAndUpdate(
@@ -86,7 +87,7 @@ router.put("/update/:songId", (req, res, next) => {
     });
 });
 /* GET home page. */
-router.delete("/delete/:songId", (req, res, next) => {
+router.delete("/delete/:songId", isAuthenticated, (req, res, next) => {
   const { songId } = req.params;
   Songs.findByIdAndDelete(songId)
     .then((deletedSong) => {
