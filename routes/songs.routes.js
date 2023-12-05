@@ -19,10 +19,26 @@ router.get("/", isAuthenticated, (req, res, next) => {
       });
     });
 });
+
+router.get("/search/:searchTerm", (req, res, next) => {
+  const {searchTerm} = req.params;
+  Songs.find({ title: { $regex: new RegExp(searchTerm, 'i') } })
+    .then((foundSongs) => {
+      foundSongs
+        ? res.status(200).json({ success: true, songs: foundSongs })
+        : res.status(200).json({ success: false, message: "Songs not found." });
+    })
+    .catch((error) => {
+      res
+        .status(400)
+        .json({ success: false, error, message: "Error: Unable to GET Song" });
+    });
+});
+
 /* GET a song by songId. */
-router.get("/:songId", isAuthenticated, (req, res, next) => {
-  const songId = req.params;
-  Songs.findById(songId)
+router.get("/:videoId", isAuthenticated, (req, res, next) => {
+  const {videoId} = req.params;
+  Songs.findOne({videoId})
     .then((foundSong) => {
       foundSong
         ? res.status(200).json({ success: true, song: foundSong })
@@ -35,15 +51,17 @@ router.get("/:songId", isAuthenticated, (req, res, next) => {
     });
 });
 
+
 /* POST given a title, artist and genre a new song will be created. */
 router.post("/create", isAuthenticated, (req, res, next) => {
-  const { title, description, videoId, thumbnailURL } = req.body;
+  const { title, description, videoId, videoDuration, thumbnail } = req.body;
   Songs.create(
     {
       title,
       description,
+      videoDuration,
       videoId,
-      thumbnailURL,
+      thumbnail,
     },
   )
     .then((createdSong) => {
@@ -65,10 +83,10 @@ router.post("/create", isAuthenticated, (req, res, next) => {
 /* PUT given a title, artist, genre and given an songId, update selected song. */
 router.put("/update/:songId", isAuthenticated, (req, res, next) => {
   const { songId } = req.params;
-  const { title, description, videoId, thumbnailURL } = req.body;
+  const { title, description, videoId, videoDuration, thumbnail } = req.body;
   Songs.findByIdAndUpdate(
     songId,
-    { title, description, videoId, thumbnailURL },
+    { title, description, videoId, videoDuration, thumbnail },
     { new: true }
   )
     .then((updatedSong) => {
