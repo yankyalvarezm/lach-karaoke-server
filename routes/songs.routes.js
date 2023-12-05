@@ -22,9 +22,9 @@ router.get("/", isAuthenticated, (req, res, next) => {
 
 router.get("/search/:searchTerm", (req, res, next) => {
   const {searchTerm} = req.params;
-  Songs.find({ title: { $regex: new RegExp(searchTerm, 'i') } })
+  Songs.find({ title: { $regex: new RegExp(searchTerm, 'i') }})
     .then((foundSongs) => {
-      foundSongs
+      foundSongs.length
         ? res.status(200).json({ success: true, songs: foundSongs })
         : res.status(200).json({ success: false, message: "Songs not found." });
     })
@@ -55,6 +55,7 @@ router.get("/:videoId", isAuthenticated, (req, res, next) => {
 /* POST given a title, artist and genre a new song will be created. */
 router.post("/create", isAuthenticated, (req, res, next) => {
   const { title, description, videoId, videoDuration, thumbnail } = req.body;
+  console.log("GUARDANDO CANCION");
   Songs.create(
     {
       title,
