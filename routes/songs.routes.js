@@ -4,6 +4,92 @@ const isAuthenticated = require("../middleware/isAuthenticated");
 const puppeteer = require("puppeteer");
 var router = express.Router();
 
+
+const checkVideoExistence = async (videoId) => {
+  let browser = null;
+
+  try {
+    browser = await puppeteer.launch({ headless: true });
+    const page = await browser.newPage();
+
+    // Redirecciona los eventos de la consola del navegador a la consola de Node.js
+    page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
+
+    await page.goto(`https://www.youtube.com/watch?v=${videoId}`);
+
+    const isUnavailable = await page.evaluate(() => {
+      const elem = document.body;
+      if (elem) {
+        // Aquí simplemente haces console.log del texto interno
+        console.log("INNER TEXT:", elem.innerText);
+        return elem.innerText.includes("Video unavailable");
+      } else {
+        console.log(
+          "No se encontró el elemento con el mensaje de video no disponible."
+        );
+        return false;
+      }
+    });
+
+    if (isUnavailable) {
+      const deletedSong = await Songs.findOneAndDelete({ videoId: videoId });
+      if (deletedSong) {
+        console.log(`Canción eliminada: ${videoId}`);
+      } else {
+        console.log(`No se encontró la canción para eliminar: ${videoId}`);
+      }
+    } else {
+      console.log(`Canción disponible: ${videoId}`);
+    }
+
+    return !isUnavailable;
+  } catch (error) {
+    console.error("Web Scraping Error:", error);
+    return false;
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+};
+
+const findVideoIds = async () => {
+  try {
+    const songs = await Songs.find({}, "videoId");
+
+    const videoIds = songs.map((song) => song.videoId);
+    return videoIds;
+  } catch (error) {
+    console.log("error:", error);
+  }
+};
+
+router.get("/cleanupVideos", isAuthenticated, async (req, res) => {
+  try {
+    const videoIds = await findVideoIds();
+    const results = { deleted: [], stillAvailable: [] };
+
+    for (const videoId of videoIds) {
+      const isAvailable = await checkVideoExistence(videoId);
+
+      if (!isAvailable) {
+        results.deleted.push(videoId);
+      } else {
+        results.stillAvailable.push(videoId);
+      }
+    }
+
+    console.log("Resultados de la limpieza:", results);
+    res.status(200).json(results);
+  } catch (error) {
+    console.error("Error durante la limpieza:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+
+
 /* GET all songs. */
 router.get("/", isAuthenticated, (req, res, next) => {
   Songs.find()
@@ -121,35 +207,35 @@ router.delete("/delete/:songId", isAuthenticated, (req, res, next) => {
     });
 });
 
-const checkVideoExistence = async (videoId) => {
-  let browser = null;
+// const checkVideoExistence = async (videoId) => {
+//   let browser = null;
 
-  try {
-    browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    await page.goto(`https://www.youtube.com/watch?v=${videoId}`);
+//   try {
+//     browser = await puppeteer.launch();
+//     const page = await browser.newPage();
+//     await page.goto(`https://www.youtube.com/watch?v=${videoId}`);
 
-    // iff the video is not available
+//     // iff the video is not available
 
-    const isUnavailable = await page.evaluate(() => {
-      const elem = document.querySelector("#player-unavailable h1");
-      return elem && elem.innerTesst.trim() === "Video no disponible";
-    });
+//     const isUnavailable = await page.evaluate(() => {
+//       const elem = document.querySelector("#player-unavailable h1");
+//       return elem && elem.innerTesst.trim() === "Video no disponible";
+//     });
 
-    if (isUnavailable && onDelete) {
-      await onDelete(videoId);
-    }
+//     if (isUnavailable && onDelete) {
+//       await onDelete(videoId);
+//     }
 
-    return !isUnavailable;
+//     return !isUnavailable;
     
-  } catch (error) {
-    console.log("Web Scrapping Error:", error);
-    return false;
-  } finally {
-    if (browser) {
-      await browser.close();
-    }
-  }
-};
+//   } catch (error) {
+//     console.log("Web Scrapping Error:", error);
+//     return false;
+//   } finally {
+//     if (browser) {
+//       await browser.close();
+//     }
+//   }
+// };
 
 module.exports = router;
