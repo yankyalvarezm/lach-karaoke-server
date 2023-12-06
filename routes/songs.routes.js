@@ -1,9 +1,9 @@
 var express = require("express");
+const puppeteer = require("puppeteer");
+const Fuse = require("fuse.js");
 const Songs = require("../models/Songs.model");
 const isAuthenticated = require("../middleware/isAuthenticated");
-const puppeteer = require("puppeteer");
 var router = express.Router();
-
 
 const checkVideoExistence = async (videoId) => {
   let browser = null;
@@ -87,11 +87,8 @@ router.get("/cleanupVideos", isAuthenticated, async (req, res) => {
   }
 });
 
-
-
-
 /* GET all songs. */
-router.get("/", isAuthenticated, (req, res, next) => {
+router.get("/", (req, res, next) => {
   Songs.find()
     .then((foundSongs) => {
       foundSongs.length
@@ -109,11 +106,20 @@ router.get("/", isAuthenticated, (req, res, next) => {
 
 router.get("/search/:searchTerm", (req, res, next) => {
   const { searchTerm } = req.params;
-  Songs.find({ title: { $regex: new RegExp(searchTerm, "i") } })
+  Songs.find({})
     .then((foundSongs) => {
-      foundSongs.length
-        ? res.status(200).json({ success: true, songs: foundSongs })
-        : res.status(200).json({ success: false, message: "Songs not found." });
+      if (foundSongs.length) {
+        const fuse = new Fuse(foundSongs, { keys: ["title"], threshold: 0.5 });
+        const results = fuse.search(searchTerm);
+        const items = results.map(song => song.item)
+        results.length
+          ? res.status(200).json({ success: true, songs: items })
+          : res
+              .status(200)
+              .json({ success: false, message: "Songs not found." });
+      } else {
+        res.status(200).json({ success: false, message: "Songs not found." });
+      }
     })
     .catch((error) => {
       res
@@ -121,6 +127,20 @@ router.get("/search/:searchTerm", (req, res, next) => {
         .json({ success: false, error, message: "Error: Unable to GET Song" });
     });
 });
+// router.get("/search/:searchTerm", (req, res, next) => {
+//   const { searchTerm } = req.params;
+//   Songs.find({ title: { $regex: new RegExp(searchTerm, "i") } })
+//     .then((foundSongs) => {
+//       foundSongs.length
+//         ? res.status(200).json({ success: true, songs: foundSongs })
+//         : res.status(200).json({ success: false, message: "Songs not found." });
+//     })
+//     .catch((error) => {
+//       res
+//         .status(400)
+//         .json({ success: false, error, message: "Error: Unable to GET Song" });
+//     });
+// });
 
 /* GET a song by songId. */
 router.get("/:videoId", isAuthenticated, (req, res, next) => {
@@ -227,7 +247,7 @@ router.delete("/delete/:songId", isAuthenticated, (req, res, next) => {
 //     }
 
 //     return !isUnavailable;
-    
+
 //   } catch (error) {
 //     console.log("Web Scrapping Error:", error);
 //     return false;
