@@ -143,7 +143,7 @@ router.get("/search/:searchTerm", (req, res, next) => {
 // });
 
 /* GET a song by songId. */
-router.get("/:videoId", isAuthenticated, (req, res, next) => {
+router.get("/:videoId", (req, res, next) => {
   const { videoId } = req.params;
   Songs.findOne({ videoId })
     .then((foundSong) => {
