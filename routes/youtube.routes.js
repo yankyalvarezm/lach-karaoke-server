@@ -15,11 +15,13 @@ const youtube = google.youtube({
     const userDataDir = path.join(__dirname, 'puppeteer_user_data');
   
     try {
-        browser = await puppeteer.launch({
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox'],
-            userDataDir: userDataDir // Usa la ruta definida como userDataDir
-        });
+        // browser = await puppeteer.launch({
+        //     headless: true,
+        //     args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        //     userDataDir: userDataDir // Usa la ruta definida como userDataDir
+        // });
+
+        browser = await puppeteer.launch({ headless: true });
 
       const page = await browser.newPage();
       page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));

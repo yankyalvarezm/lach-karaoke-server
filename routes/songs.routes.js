@@ -13,10 +13,13 @@ const checkVideoExistence = async (videoId) => {
 
   try {
     browser = await puppeteer.launch({
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
       userDataDir: userDataDir // Usa la ruta definida como userDataDir
   });
+
+  // browser = await puppeteer.launch({ headless: true });
     
     const page = await browser.newPage();
 
