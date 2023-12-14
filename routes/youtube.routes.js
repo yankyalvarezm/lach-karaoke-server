@@ -2,6 +2,7 @@ var express = require("express");
 var router = express.Router();
 const { google } = require('googleapis')
 const puppeteer = require("puppeteer");
+const path = require('path')
 
 const youtube = google.youtube({
     version: 'v3',
@@ -10,11 +11,14 @@ const youtube = google.youtube({
   
   const checkVideoExistence = async (videoId) => {
     let browser = null;
+
+    const userDataDir = path.join(__dirname, 'puppeteer_user_data');
   
     try {
         browser = await puppeteer.launch({
             headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            userDataDir: userDataDir // Usa la ruta definida como userDataDir
         });
 
       const page = await browser.newPage();

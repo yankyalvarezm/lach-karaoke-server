@@ -4,15 +4,19 @@ const Fuse = require("fuse.js");
 const Songs = require("../models/Songs.model");
 const isAuthenticated = require("../middleware/isAuthenticated");
 var router = express.Router();
+const path = require('path')
 
 const checkVideoExistence = async (videoId) => {
   let browser = null;
 
+  const userDataDir = path.join(__dirname, 'puppeteer_user_data');
+
   try {
     browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      userDataDir: userDataDir // Usa la ruta definida como userDataDir
+  });
     
     const page = await browser.newPage();
 
