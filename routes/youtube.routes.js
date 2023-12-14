@@ -1,55 +1,76 @@
 var express = require("express");
 var router = express.Router();
 const { google } = require('googleapis')
+const puppeteer = require("puppeteer");
 
 const youtube = google.youtube({
     version: 'v3',
     auth: process.env.YOUTUBE_API_KEY 
   });
-
-  router.get('/search/videos', (req, res) => {
+  
+  const checkVideoExistence = async (videoId) => {
+    let browser = null;
+  
+    try {
+      browser = await puppeteer.launch({ headless: true });
+      const page = await browser.newPage();
+      page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
+  
+      // Usar URL de incrustación para la verificación
+      await page.goto(`https://www.youtube.com/embed/${videoId}`);
+  
+      const isUnavailable = await page.evaluate(() => {
+        const elem = document.body;
+        if(elem) {
+            console.log("INNER TEXT:", elem.innerText);
+        }
+        return elem && (elem.innerText.includes("Video unavailable") || elem.innerText.includes("Video no disponible")) ;
+      });
+  
+      return !isUnavailable;
+    } catch (error) {
+      console.error("Web Scraping Error:", error);
+      return false;
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
+    }
+  };
+  
+  
+  router.get('/search/videos', async (req, res) => {
     const query = req.query.q; 
-
-    youtube.search.list({
+  
+    try {
+      const response = await youtube.search.list({
         part: 'snippet',
         q: query,
         videoEmbeddable: 'any',
-        maxResults: 20
-    }, async (err, response) => {
-        if (err) {
-            console.error('Error en la búsqueda de videos de YouTube:', err); 
-            res.status(500).json({
-                success: false,
-                message: 'Error al realizar la búsqueda en YouTube',
-                error: err.message 
-            });
-            return;
+        maxResults: 10
+      });
+  
+      const videos = response.data.items;
+      const validVideos = [];
+  
+      for (const video of videos) {
+        const videoId = video.id.videoId;
+        const isAvailable = await checkVideoExistence(videoId);
+        if (isAvailable) {
+          validVideos.push(video);
         }
-
-        // Filtrar los resultados para obtener solo videos incrustables
-        const videos = response.data.items;
-        const embeddableVideos = [];
-
-        for (const video of videos) {
-            try {
-                const videoDetails = await youtube.videos.list({
-                    part: 'status',
-                    id: video.id.videoId
-                });
-
-                if (videoDetails.data.items[0].status.embeddable) {
-                    embeddableVideos.push(video);
-                }
-            } catch (error) {
-                console.error('Error al obtener detalles del video:', error);
-                console.log('error:', error)
-                // Manejar el error según sea necesario
-            }
-        }
-
-        res.json({ items: embeddableVideos });
-    });
-});
+      }
+  
+      res.json({ items: validVideos });
+    } catch (err) {
+      console.error('Error en la búsqueda de videos de YouTube:', err);
+      res.status(500).json({
+        success: false,
+        message: 'Error al realizar la búsqueda en YouTube',
+        error: err.message 
+      });
+    }
+  });
 
 
   router.get('/video/details', (req, res) => {

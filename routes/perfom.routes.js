@@ -19,14 +19,14 @@ const checkVideoExistence = async (videoId) => {
     // Redirecciona los eventos de la consola del navegador a la consola de Node.js
     page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
 
-    await page.goto(`https://www.youtube.com/watch?v=${videoId}`);
+    await page.goto(`https://www.youtube.com/embed/${videoId}`);
 
     const isUnavailable = await page.evaluate(() => {
       const elem = document.body;
       if (elem) {
         // Aquí simplemente haces console.log del texto interno
         console.log("INNER TEXT:", elem.innerText);
-        return elem.innerText.includes("Video unavailable");
+        return elem && (elem.innerText.includes("Video unavailable") || elem.innerText.includes("Video no disponible")) ;
       } else {
         console.log(
           "No se encontró el elemento con el mensaje de video no disponible."
@@ -78,28 +78,7 @@ router.get("/findVideoIds", async (req, res) => {
   }
 });
 
-router.get("/cleanupVideos", isAuthenticated, async (req, res) => {
-  try {
-    const videoIds = await findVideoIds();
-    const results = { deleted: [], stillAvailable: [] };
 
-    for (const videoId of videoIds) {
-      const isAvailable = await checkVideoExistence(videoId);
-
-      if (!isAvailable) {
-        results.deleted.push(videoId);
-      } else {
-        results.stillAvailable.push(videoId);
-      }
-    }
-
-    console.log("Resultados de la limpieza:", results);
-    res.status(200).json(results);
-  } catch (error) {
-    console.error("Error durante la limpieza:", error);
-    res.status(500).json({ error: error.message });
-  }
-});
 
 router.post("/add-perform", isAuthenticated, async (req, res) => {
   try {
@@ -309,7 +288,7 @@ router.get("/queue-songs", isAuthenticated, async (req, res) => {
       })
     );
 
-    console.log("Emitiendo evento 'update_queue' con:", performs);
+    // console.log("Emitiendo evento 'update_queue' con:", performs);
     io.emit("update_queue", performs);
     res.status(200).json({ success: true, data: performs });
   } catch (error) {
