@@ -16,8 +16,7 @@ const youtube = google.youtube({
   
     try {
         browser = await puppeteer.launch({
-            headless: false,
-            product: 'firefox',
+            headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox'],
             userDataDir: userDataDir // Usa la ruta definida como userDataDir
         });
