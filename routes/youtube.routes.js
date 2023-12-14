@@ -12,16 +12,16 @@ const youtube = google.youtube({
   const checkVideoExistence = async (videoId) => {
     let browser = null;
 
-    const userDataDir = path.join(__dirname, 'puppeteer_user_data');
+    // const userDataDir = path.join(__dirname, 'puppeteer_user_data');
   
     try {
-        // browser = await puppeteer.launch({
-        //     headless: true,
-        //     args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        //     userDataDir: userDataDir // Usa la ruta definida como userDataDir
-        // });
+        browser = await puppeteer.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            // userDataDir: userDataDir 
+        });
 
-        browser = await puppeteer.launch({ headless: true });
+        // browser = await puppeteer.launch({ headless: true });
 
       const page = await browser.newPage();
       page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));

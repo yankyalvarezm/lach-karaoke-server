@@ -9,17 +9,17 @@ const path = require('path')
 const checkVideoExistence = async (videoId) => {
   let browser = null;
 
-  const userDataDir = path.join(__dirname, 'puppeteer_user_data');
+  // const userDataDir = path.join(__dirname, 'puppeteer_user_data');
 
   try {
-  //   browser = await puppeteer.launch({
-  //     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
-  //     headless: true,
-  //     args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  //     userDataDir: userDataDir // Usa la ruta definida como userDataDir
-  // });
+    browser = await puppeteer.launch({
+      // executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      // userDataDir: userDataDir
+  });
 
-  browser = await puppeteer.launch({ headless: true });
+  // browser = await puppeteer.launch({ headless: true });
     
     const page = await browser.newPage();
 
