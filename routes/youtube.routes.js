@@ -12,7 +12,11 @@ const youtube = google.youtube({
     let browser = null;
   
     try {
-      browser = await puppeteer.launch({ headless: true });
+        browser = await puppeteer.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+
       const page = await browser.newPage();
       page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
   

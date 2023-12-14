@@ -9,7 +9,11 @@ const checkVideoExistence = async (videoId) => {
   let browser = null;
 
   try {
-    browser = await puppeteer.launch({ headless: true });
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    
     const page = await browser.newPage();
 
     // Redirecciona los eventos de la consola del navegador a la consola de Node.js
