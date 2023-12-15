@@ -6,41 +6,51 @@ const isAuthenticated = require("../middleware/isAuthenticated");
 var router = express.Router();
 const path = require('path')
 
+let globalBrowser;
+(async () => {
+    globalBrowser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+})();
+
 const checkVideoExistence = async (videoId) => {
-  let browser = null;
+  // let browser = null;
+
+  let page;
+
+  
 
   // const userDataDir = path.join(__dirname, 'puppeteer_user_data');
 
   try {
-    browser = await puppeteer.launch({
-      // executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      // userDataDir: userDataDir
-  });
+    page = await globalBrowser.newPage();
+
+        // Interceptar y desactivar la carga de ciertos tipos de recursos
+        await page.setRequestInterception(true);
+        page.on('request', request => {
+            if (['image', 'stylesheet', 'font'].includes(request.resourceType())) {
+                request.abort();
+            } else {
+                request.continue();
+            }
+        });
 
   // browser = await puppeteer.launch({ headless: true });
     
-    const page = await browser.newPage();
+    // const page = await browser.newPage();
 
     // Redirecciona los eventos de la consola del navegador a la consola de Node.js
     page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
+        await page.goto(`https://www.youtube.com/embed/${videoId}`, { waitUntil: 'domcontentloaded' });
 
-    await page.goto(`https://www.youtube.com/embed/${videoId}`);
-
-    const isUnavailable = await page.evaluate(() => {
-      const elem = document.body;
-      if (elem) {
-        // Aquí simplemente haces console.log del texto interno
-        console.log("INNER TEXT:", elem.innerText);
-        return elem && (elem.innerText.includes("Video unavailable") || elem.innerText.includes("Video no disponible")) ;
-      } else {
-        console.log(
-          "No se encontró el elemento con el mensaje de video no disponible."
-        );
-        return false;
-      }
-    });
+        const isUnavailable = await page.evaluate(() => {
+            const elem = document.body;
+            if (elem) {
+                console.log("INNER TEXT:", elem.innerText);
+            }
+            return elem && (elem.innerText.includes("Video unavailable") || elem.innerText.includes("Video no disponible"));
+        });
 
     if (isUnavailable) {
       const deletedSong = await Song.findOneAndDelete({ videoId: videoId });
