@@ -14,17 +14,12 @@ let globalBrowser;
     });
 })();
 
-const checkVideoExistence = async (videoId) => {
-  // let browser = null;
+// Función para verificar la existencia de un video y eliminar la canción si no está disponible
+const checkVideoExistenceAndDelete = async (videoId) => {
+    let page;
 
-  let page;
-
-  
-
-  // const userDataDir = path.join(__dirname, 'puppeteer_user_data');
-
-  try {
-    page = await globalBrowser.newPage();
+    try {
+        page = await globalBrowser.newPage();
 
         // Interceptar y desactivar la carga de ciertos tipos de recursos
         await page.setRequestInterception(true);
@@ -36,12 +31,7 @@ const checkVideoExistence = async (videoId) => {
             }
         });
 
-  // browser = await puppeteer.launch({ headless: true });
-    
-    // const page = await browser.newPage();
-
-    // Redirecciona los eventos de la consola del navegador a la consola de Node.js
-    page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
+        page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
         await page.goto(`https://www.youtube.com/embed/${videoId}`, { waitUntil: 'domcontentloaded' });
 
         const isUnavailable = await page.evaluate(() => {
@@ -52,26 +42,26 @@ const checkVideoExistence = async (videoId) => {
             return elem && (elem.innerText.includes("Video unavailable") || elem.innerText.includes("Video no disponible"));
         });
 
-    if (isUnavailable) {
-      const deletedSong = await Song.findOneAndDelete({ videoId: videoId });
-      if (deletedSong) {
-        console.log(`Canción eliminada: ${videoId}`);
-      } else {
-        console.log(`No se encontró la canción para eliminar: ${videoId}`);
-      }
-    } else {
-      console.log(`Canción disponible: ${videoId}`);
-    }
+        if (isUnavailable) {
+            const deletedSong = await Song.findOneAndDelete({ videoId: videoId });
+            if (deletedSong) {
+                console.log(`Canción eliminada: ${videoId}`);
+            } else {
+                console.log(`No se encontró la canción para eliminar: ${videoId}`);
+            }
+        } else {
+            console.log(`Canción disponible: ${videoId}`);
+        }
 
-    return !isUnavailable;
-  } catch (error) {
-    console.error("Web Scraping Error:", error);
-    return false;
-  } finally {
-    if (browser) {
-      await browser.close();
+        return !isUnavailable;
+    } catch (error) {
+        console.error("Web Scraping Error:", error);
+        return false;
+    } finally {
+        if (page) {
+            await page.close();
+        }
     }
-  }
 };
 
 const findVideoIds = async () => {
@@ -85,36 +75,13 @@ const findVideoIds = async () => {
   }
 };
 
-// router.get("/cleanupVideos", isAuthenticated, async (req, res) => {
-//   try {
-//     const videoIds = await findVideoIds();
-//     const results = { deleted: [], stillAvailable: [] };
-
-//     for (const videoId of videoIds) {
-//       const isAvailable = await checkVideoExistence(videoId);
-
-//       if (!isAvailable) {
-//         results.deleted.push(videoId);
-//       } else {
-//         results.stillAvailable.push(videoId);
-//       }
-//     }
-
-//     console.log("Resultados de la limpieza:", results);
-//     res.status(200).json(results);
-//   } catch (error) {
-//     console.error("Error durante la limpieza:", error);
-//     res.status(500).json({ error: error.message });
-//   }
-// });
-
 router.get("/cleanupVideos", async (req, res) => {
   try {
     const videoIds = await findVideoIds();
     const results = { deleted: [], stillAvailable: [] };
 
     for (const videoId of videoIds) {
-      const isAvailable = await checkVideoExistence(videoId);
+      const isAvailable = await checkVideoExistenceAndDelete(videoId);
 
       if (!isAvailable) {
         results.deleted.push(videoId);
