@@ -94,7 +94,7 @@ router.get('/search/videos', async (req, res) => {
         });
 
         const videos = response.data.items;
-        const validVideos = await processVideosInBatches(videos, 5); // Procesar en lotes de 5
+        const validVideos = await processVideosInBatches(videos, 1); // Procesar en lotes de 5
 
         res.json({ items: validVideos });
     } catch (err) {
