@@ -105,7 +105,7 @@ router.post("/add-perform", isAuthenticated, async (req, res) => {
       session: sessionId,
       isQueue: false,
     });
-    if (existingPerfomsCount >= 2) {
+    if (existingPerfomsCount >= 5) {
       return res.status(400).json({
         success: false,
         message: "No se pueden agregar más canciones, límite alcanzado.",
