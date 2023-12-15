@@ -24,8 +24,19 @@ const checkVideoExistence = async (videoId) => {
 
     try {
         page = await globalBrowser.newPage();
+
+        // Interceptar y desactivar la carga de ciertos tipos de recursos
+        await page.setRequestInterception(true);
+        page.on('request', request => {
+            if (['image', 'stylesheet', 'font'].includes(request.resourceType())) {
+                request.abort();
+            } else {
+                request.continue();
+            }
+        });
+
         page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
-        await page.goto(`https://www.youtube.com/embed/${videoId}`);
+        await page.goto(`https://www.youtube.com/embed/${videoId}`, { waitUntil: 'domcontentloaded' });
 
         const isUnavailable = await page.evaluate(() => {
             const elem = document.body;
