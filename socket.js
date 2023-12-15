@@ -24,8 +24,10 @@ const init = (server) => {
     });
 
     socket.on("toggleIsRunning", (data) => {
+      console.log('toggleisRinninug ====>', data.isRunning)
       isRunning = data.isRunning;
       io.emit("toggleIsRunning", data);
+
     });
 
     socket.on("getIsRunning", () => {
