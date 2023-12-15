@@ -18,8 +18,16 @@ let globalBrowser;
     });
 })();
 
+// Uso de caché para almacenar los resultados de las verificaciones de videos
+const videoCache = new Map();
+
 // Función para verificar la existencia de un video
 const checkVideoExistence = async (videoId) => {
+    // Verificar si el resultado ya está en caché
+    if (videoCache.has(videoId)) {
+        return videoCache.get(videoId);
+    }
+
     let page;
 
     try {
@@ -46,6 +54,7 @@ const checkVideoExistence = async (videoId) => {
             return elem && (elem.innerText.includes("Video unavailable") || elem.innerText.includes("Video no disponible"));
         });
 
+        videoCache.set(videoId, !isUnavailable); // Guardar en caché
         return !isUnavailable;
     } catch (error) {
         console.error("Web Scraping Error:", error);
@@ -70,15 +79,13 @@ router.get('/search/videos', async (req, res) => {
         });
 
         const videos = response.data.items;
-        const validVideos = [];
 
-        for (const video of videos) {
-            const videoId = video.id.videoId;
-            const isAvailable = await checkVideoExistence(videoId);
-            if (isAvailable) {
-                validVideos.push(video);
-            }
-        }
+        // Realizar las verificaciones en paralelo
+        const checkPromises = videos.map(video => 
+            checkVideoExistence(video.id.videoId).then(isAvailable => isAvailable ? video : null)
+        );
+
+        const validVideos = (await Promise.all(checkPromises)).filter(video => video != null);
 
         res.json({ items: validVideos });
     } catch (err) {
