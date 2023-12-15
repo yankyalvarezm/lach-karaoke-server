@@ -66,6 +66,21 @@ const checkVideoExistence = async (videoId) => {
     }
 };
 
+// Función para procesar videos en lotes
+const processVideosInBatches = async (videos, batchSize) => {
+    let result = [];
+    for (let i = 0; i < videos.length; i += batchSize) {
+        const batch = videos.slice(i, i + batchSize);
+        const batchResults = await Promise.all(
+            batch.map(video => 
+                checkVideoExistence(video.id.videoId).then(isAvailable => isAvailable ? video : null)
+            )
+        );
+        result = [...result, ...batchResults.filter(video => video !== null)];
+    }
+    return result;
+};
+
 // Rutas
 router.get('/search/videos', async (req, res) => {
     const query = req.query.q;
@@ -79,13 +94,7 @@ router.get('/search/videos', async (req, res) => {
         });
 
         const videos = response.data.items;
-
-        // Realizar las verificaciones en paralelo
-        const checkPromises = videos.map(video => 
-            checkVideoExistence(video.id.videoId).then(isAvailable => isAvailable ? video : null)
-        );
-
-        const validVideos = (await Promise.all(checkPromises)).filter(video => video != null);
+        const validVideos = await processVideosInBatches(videos, 5); // Procesar en lotes de 5
 
         res.json({ items: validVideos });
     } catch (err) {
