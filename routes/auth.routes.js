@@ -12,6 +12,8 @@ const isAuthenticated = require("../middleware/isAuthenticated");
 
 const saltRounds = 10;
 
+// const hola = 'hello'
+
 const cleanupInterval1m = 60 * 1000; // Cleanup every 60 seconds
 const cleanupInterval1h = 60 * 60 * 1000; // Cleanup every 60 seconds
 const cleanupInterval24h = 24 * 60 * 60 * 1000; // Cleanup every 24 hours
