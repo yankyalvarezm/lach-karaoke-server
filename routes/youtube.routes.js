@@ -57,7 +57,7 @@ const youtube = google.youtube({
         part: 'snippet',
         q: query,
         videoEmbeddable: 'any',
-        maxResults: 20
+        maxResults: 15
       });
   
       const videos = response.data.items;
