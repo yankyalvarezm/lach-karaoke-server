@@ -66,7 +66,7 @@ router.get('/search/videos', async (req, res) => {
             part: 'snippet',
             q: query,
             videoEmbeddable: 'any',
-            maxResults: 15
+            maxResults: 10
         });
 
         const videos = response.data.items;
