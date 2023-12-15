@@ -18,16 +18,8 @@ let globalBrowser;
     });
 })();
 
-// Uso de caché para almacenar los resultados de las verificaciones de videos
-const videoCache = new Map();
-
 // Función para verificar la existencia de un video
 const checkVideoExistence = async (videoId) => {
-    // Verificar si el resultado ya está en caché
-    if (videoCache.has(videoId)) {
-        return videoCache.get(videoId);
-    }
-
     let page;
 
     try {
@@ -54,7 +46,6 @@ const checkVideoExistence = async (videoId) => {
             return elem && (elem.innerText.includes("Video unavailable") || elem.innerText.includes("Video no disponible"));
         });
 
-        videoCache.set(videoId, !isUnavailable); // Guardar en caché
         return !isUnavailable;
     } catch (error) {
         console.error("Web Scraping Error:", error);
@@ -64,21 +55,6 @@ const checkVideoExistence = async (videoId) => {
             await page.close();
         }
     }
-};
-
-// Función para procesar videos en lotes
-const processVideosInBatches = async (videos, batchSize) => {
-    let result = [];
-    for (let i = 0; i < videos.length; i += batchSize) {
-        const batch = videos.slice(i, i + batchSize);
-        const batchResults = await Promise.all(
-            batch.map(video => 
-                checkVideoExistence(video.id.videoId).then(isAvailable => isAvailable ? video : null)
-            )
-        );
-        result = [...result, ...batchResults.filter(video => video !== null)];
-    }
-    return result;
 };
 
 // Rutas
@@ -94,7 +70,15 @@ router.get('/search/videos', async (req, res) => {
         });
 
         const videos = response.data.items;
-        const validVideos = await processVideosInBatches(videos, 1); // Procesar en lotes de 5
+        const validVideos = [];
+
+        for (const video of videos) {
+            const videoId = video.id.videoId;
+            const isAvailable = await checkVideoExistence(videoId);
+            if (isAvailable) {
+                validVideos.push(video);
+            }
+        }
 
         res.json({ items: validVideos });
     } catch (err) {
