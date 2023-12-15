@@ -193,7 +193,7 @@ router.get("/:videoId", (req, res, next) => {
 });
 
 /* POST given a title, artist and genre a new song will be created. */
-router.post("/create", isAuthenticated, (req, res, next) => {
+router.post("/create", (req, res, next) => {
   const { title, description, videoId, videoDuration, thumbnail } = req.body;
   console.log("GUARDANDO CANCION");
   Songs.create({
