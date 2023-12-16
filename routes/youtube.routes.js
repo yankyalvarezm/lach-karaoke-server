@@ -115,7 +115,7 @@ router.get("/search/videos", async (req, res) => {
       videoEmbeddable: "true",
       videoSyndicated: "true",
       videoLicense: "youtube",
-      maxResults: 10,
+      maxResults: 20,
     });
     const ids = response.data.items.map((video) => video.id.videoId);
     // ids = [
