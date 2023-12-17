@@ -249,6 +249,7 @@ router.put("/queue-perform/:perfomId", isAuthenticated, async (req, res) => {
     }
 
     perfom.isQueue = true;
+    perfom.queuedAt = new Date();
     await perfom.save();
 
     res.status(200).json({
@@ -274,7 +275,7 @@ router.get("/queue-songs", isAuthenticated, async (req, res) => {
       session: sessionId,
       isQueue: true,
       isPlayed: false,
-    });
+    }).sort({ queuedAt: 1 });
 
     // Realiza un 'populate' manual dependiendo de si 'user' está presente o no
     performs = await Promise.all(
