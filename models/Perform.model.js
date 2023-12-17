@@ -17,6 +17,7 @@ const perfomSchema = new Schema(
             type: Boolean,
             default: false,
         },
+        queuedAt: Date,
         isPlaying: {
             type: Boolean,
             default: false,
