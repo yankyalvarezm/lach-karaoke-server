@@ -5,6 +5,8 @@ const Songs = require("../models/Songs.model");
 const isAuthenticated = require("../middleware/isAuthenticated");
 var router = express.Router();
 const path = require('path')
+const { exec } = require("child_process");
+
 
 let globalBrowser;
 (async () => {
@@ -13,6 +15,45 @@ let globalBrowser;
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 })();
+
+const curlYoutubeCommand = (id, stringToFind) =>
+  `curl -s https://www.youtube.com/embed/${id} | grep ${stringToFind} | wc -l`;
+
+const fetchVideos = async (ids) => {
+  const videos = [];
+
+  const executeCurlCommand = (id) => {
+    return new Promise((resolve, reject) => {
+      const command = curlYoutubeCommand(id, "UNPLAYABLE");
+
+      exec(command, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Error executing curl command: ${error.message}`);
+          reject(error);
+          return;
+        }
+
+        // console.log('Curl command output:', stdout);
+
+        if (Number(stdout) === 0) {
+          videos.push(id);
+        }
+
+        resolve();
+      });
+    });
+  };
+
+  for (const id of ids) {
+    try {
+      await executeCurlCommand(id);
+    } catch (error) {
+      console.error("Error fetching videos:", error);
+    }
+  }
+
+  return videos;
+};
 
 // Función para verificar la existencia de un video y eliminar la canción si no está disponible
 const checkVideoExistenceAndDelete = async (videoId) => {
@@ -75,20 +116,22 @@ const findVideoIds = async () => {
   }
 };
 
+
+
 router.get("/cleanupVideos", async (req, res) => {
   try {
     const videoIds = await findVideoIds();
-    const results = { deleted: [], stillAvailable: [] };
-
-    for (const videoId of videoIds) {
-      const isAvailable = await checkVideoExistenceAndDelete(videoId);
-
-      if (!isAvailable) {
-        results.deleted.push(videoId);
-      } else {
-        results.stillAvailable.push(videoId);
-      }
+    const usableIds = await fetchVideos(videoIds)
+    const iDsToDelete = videoIds.filter(id => !usableIds.includes(id))
+    if(iDsToDelete.length){
+      const deleteResponse = await Songs.deleteMany({ videoId: { $in: iDsToDelete } })
+      console.log("Resultados de la limpieza:", `deleted: ${iDsToDelete}`, `stillAvailable: ${usableIds}`);
     }
+    const results = { deleted: iDsToDelete, stillAvailable: usableIds };
+    
+    // for (const videoId of videoIds) {
+    //   const isAvailable = await checkVideoExistenceAndDelete(videoId);
+   // }
 
     console.log("Resultados de la limpieza:", results);
     res.status(200).json(results);
@@ -97,6 +140,30 @@ router.get("/cleanupVideos", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+
+// router.get("/cleanupVideos", async (req, res) => {
+//   try {
+//     const videoIds = await findVideoIds();
+//     const results = { deleted: [], stillAvailable: [] };
+
+//     for (const videoId of videoIds) {
+//       const isAvailable = await checkVideoExistenceAndDelete(videoId);
+
+//       if (!isAvailable) {
+//         results.deleted.push(videoId);
+//       } else {
+//         results.stillAvailable.push(videoId);
+//       }
+//     }
+
+//     console.log("Resultados de la limpieza:", results);
+//     res.status(200).json(results);
+//   } catch (error) {
+//     console.error("Error durante la limpieza:", error);
+//     res.status(500).json({ error: error.message });
+//   }
+// });
 
 /* GET all songs. */
 router.get("/", (req, res, next) => {
