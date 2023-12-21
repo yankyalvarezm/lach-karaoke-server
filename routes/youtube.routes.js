@@ -12,10 +12,7 @@ const fetchVideos = async (ids) => {
 
   const executeCurlCommand = (id) => {
     return new Promise((resolve, reject) => {
-      const command = curlYoutubeCommand(
-        id,
-        "UNPLAYABLE"
-      );
+      const command = curlYoutubeCommand(id, "UNPLAYABLE|Video no disponibe|Video unavailable");
 
       exec(command, (error, stdout, stderr) => {
         if (error) {
@@ -59,6 +56,8 @@ const youtube3 = google.youtube({
   version: "v3",
   auth: process.env.YOUTUBE_API_KEY3,
 });
+
+const youtubeKeys = [youtube,youtube2,youtube3]
 
 // Iniciar la instancia global del navegador
 let globalBrowser;
@@ -119,48 +118,10 @@ router.get("/search/videos", async (req, res) => {
   const query = req.query.q;
 
   try {
-    const response = await youtube.search.list({
-      part: "snippet",
-      q: query,
-      type: "video",
-      videoEmbeddable: "true",
-      videoSyndicated: "true",
-      videoLicense: "youtube",
-      maxResults: 20,
-    });
-    const ids = response.data.items.map((video) => video.id.videoId);
-
-    const usableIds = await fetchVideos(ids);
-    const videos = response.data.items.filter((video) =>
-      usableIds.includes(video.id.videoId)
-    );
-    console.log();
-
-    res.json({ items: videos });
-  } catch (err) {
-    // console.error("Error en la búsqueda de videos de YouTube:", err);
-    try {
-      const response = await youtube2.search.list({
-        part: "snippet",
-        q: query,
-        type: "video",
-        videoEmbeddable: "true",
-        videoSyndicated: "true",
-        videoLicense: "youtube",
-        maxResults: 20,
-      });
-      const ids = response.data.items.map((video) => video.id.videoId);
-
-      const usableIds = await fetchVideos(ids);
-      const videos = response.data.items.filter((video) =>
-        usableIds.includes(video.id.videoId)
-      );
-      console.log("Youtube 1 api key Failed, using Youtube 2 api key");
-
-      res.json({ items: videos });
-    } catch (error) {
+    let err;
+    for(let yt of youtubeKeys){
       try {
-        const response = await youtube3.search.list({
+        const response = await yt.search.list({
           part: "snippet",
           q: query,
           type: "video",
@@ -170,24 +131,31 @@ router.get("/search/videos", async (req, res) => {
           maxResults: 20,
         });
         const ids = response.data.items.map((video) => video.id.videoId);
-
+      
         const usableIds = await fetchVideos(ids);
-        const videos = response.data.items.filter((video) =>
-          usableIds.includes(video.id.videoId)
-        );
-        console.log("Youtube 1 and 2 api keys Failed, using Youtube 3 api key");
-
+        const videos = response.data.items.filter(video => usableIds.includes(video.id.videoId));
+        console.log();
         res.json({ items: videos });
+        break;
       } catch (error) {
-        console.error("Error en la búsqueda de videos de YouTube:", error);
-
-        res.status(500).json({
-          success: false,
-          message: "Error al realizar la búsqueda en YouTube",
-          error: err.message,
-        });
+        err = error;
+        continue;
       }
     }
+
+    console.error("Error en la búsqueda de videos de YouTube, se acabo toda la quota o hay algun error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Error al realizar la búsqueda en YouTube",
+      error: err.message,
+    });
+    
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Error al realizar la búsqueda en YouTube",
+      error: err.message,
+    });
   }
 });
 
