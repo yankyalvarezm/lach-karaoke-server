@@ -184,10 +184,11 @@ router.get("/", (req, res, next) => {
 
 router.get("/search/:searchTerm", (req, res, next) => {
   const { searchTerm } = req.params;
+  console.log(searchTerm);
   Songs.find({})
     .then((foundSongs) => {
       if (foundSongs.length) {
-        const fuse = new Fuse(foundSongs, { keys: ["title"], threshold: 0.3 });
+        const fuse = new Fuse(foundSongs, { keys: ["title"], threshold: 0.5 });
         const results = fuse.search(searchTerm);
         const items = results.map(song => song.item)
         results.length
