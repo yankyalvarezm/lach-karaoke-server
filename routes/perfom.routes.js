@@ -102,10 +102,11 @@ router.post("/add-perform", isAuthenticated, async (req, res) => {
     }
     // Contar perfoms existentes
     const existingPerfomsCount = await Perfom.countDocuments({
+      _id: userId,
       session: sessionId,
       isQueue: false,
     });
-    if (existingPerfomsCount >= 5) {
+    if (existingPerfomsCount >= 2) {
       return res.status(400).json({
         success: false,
         message: "No se pueden agregar más canciones, límite alcanzado.",

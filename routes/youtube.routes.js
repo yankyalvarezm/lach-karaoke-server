@@ -5,14 +5,14 @@ const puppeteer = require("puppeteer");
 const { exec } = require("child_process");
 
 const curlYoutubeCommand = (id, stringToFind) =>
-  `curl -s https://www.youtube.com/embed/${id} | grep ${stringToFind} | wc -l`;
+  `curl -s https://www.youtube.com/embed/${id} | grep -E ${stringToFind} | wc -l`;
 
 const fetchVideos = async (ids) => {
   const videos = [];
 
   const executeCurlCommand = (id) => {
     return new Promise((resolve, reject) => {
-      const command = curlYoutubeCommand(id, "UNPLAYABLE");
+      const command = curlYoutubeCommand(id, "UNPLAYABLE|Video no disponibe|Video unavailable");
 
       exec(command, (error, stdout, stderr) => {
         if (error) {
