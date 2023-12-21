@@ -12,7 +12,10 @@ const fetchVideos = async (ids) => {
 
   const executeCurlCommand = (id) => {
     return new Promise((resolve, reject) => {
-      const command = curlYoutubeCommand(id, "UNPLAYABLE|Video no disponibe|Video unavailable");
+      const command = curlYoutubeCommand(
+        id,
+        "UNPLAYABLE|Video no disponibe|Video unavailable"
+      );
 
       exec(command, (error, stdout, stderr) => {
         if (error) {
@@ -57,7 +60,7 @@ const youtube3 = google.youtube({
   auth: process.env.YOUTUBE_API_KEY3,
 });
 
-const youtubeKeys = [youtube,youtube2,youtube3]
+const youtubeKeys = [youtube, youtube2, youtube3];
 
 // Iniciar la instancia global del navegador
 let globalBrowser;
@@ -119,7 +122,7 @@ router.get("/search/videos", async (req, res) => {
 
   try {
     let err;
-    for(let yt of youtubeKeys){
+    for (let yt of youtubeKeys) {
       try {
         const response = await yt.search.list({
           part: "snippet",
@@ -131,9 +134,11 @@ router.get("/search/videos", async (req, res) => {
           maxResults: 20,
         });
         const ids = response.data.items.map((video) => video.id.videoId);
-      
+
         const usableIds = await fetchVideos(ids);
-        const videos = response.data.items.filter(video => usableIds.includes(video.id.videoId));
+        const videos = response.data.items.filter((video) =>
+          usableIds.includes(video.id.videoId)
+        );
         console.log();
         res.json({ items: videos });
         break;
@@ -143,13 +148,15 @@ router.get("/search/videos", async (req, res) => {
       }
     }
 
-    console.error("Error en la búsqueda de videos de YouTube, se acabo toda la quota o hay algun error:", err);
+    console.error(
+      "Error en la búsqueda de videos de YouTube, se acabo toda la quota o hay algun error:",
+      err
+    );
     res.status(500).json({
       success: false,
       message: "Error al realizar la búsqueda en YouTube",
       error: err.message,
     });
-    
   } catch (err) {
     res.status(500).json({
       success: false,
@@ -165,25 +172,46 @@ router.get("/video/details", (req, res) => {
   if (!videoId) {
     return res.status(400).send({ message: "Se requiere el ID del video" });
   }
+  let err;
+  try {
+    for (let yt of youtubeKeys) {
+      try {
+        yt.videos.list(
+          {
+            part: "snippet,contentDetails",
+            id: videoId,
+          },
+          (err, response) => {
+            if (err) {
+              res.status(500).send(err);
+              return;
+            }
 
-  youtube.videos.list(
-    {
-      part: "snippet,contentDetails",
-      id: videoId,
-    },
-    (err, response) => {
-      if (err) {
-        res.status(500).send(err);
-        return;
-      }
-
-      if (response.data.items.length > 0) {
-        res.json(response.data.items[0]);
-      } else {
-        res.status(404).send({ message: "Video no encontrado" });
+            if (response.data.items.length > 0) {
+              res.json(response.data.items[0]);
+            } else {
+              res.status(404).send({ message: "Video no encontrado" });
+            }
+          }
+        );
+      } catch (error) {
+        err = error;
+        continue;
       }
     }
-  );
+
+    res.status(500).json({
+      success: false,
+      message: "Error al realizar la búsqueda en YouTube",
+      error: err.message,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error al realizar la búsqueda en YouTube",
+      error: err.message,
+    });
+  }
 });
 
 // Cerrar el navegador al terminar el proceso
