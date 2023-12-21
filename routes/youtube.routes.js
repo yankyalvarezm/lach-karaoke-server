@@ -3,7 +3,7 @@ var router = express.Router();
 const { google } = require("googleapis");
 const puppeteer = require("puppeteer");
 const { exec } = require("child_process");
-
+//
 const curlYoutubeCommand = (id, stringToFind) =>
   `curl -s https://www.youtube.com/embed/${id} | grep -E ${stringToFind} | wc -l`;
 
@@ -12,10 +12,7 @@ const fetchVideos = async (ids) => {
 
   const executeCurlCommand = (id) => {
     return new Promise((resolve, reject) => {
-      const command = curlYoutubeCommand(
-        id,
-        "UNPLAYABLE"
-      );
+      const command = curlYoutubeCommand(id, "UNPLAYABLE");
 
       exec(command, (error, stdout, stderr) => {
         if (error) {
@@ -197,25 +194,70 @@ router.get("/video/details", (req, res) => {
   if (!videoId) {
     return res.status(400).send({ message: "Se requiere el ID del video" });
   }
+  try {
+    youtube.videos.list(
+      {
+        part: "snippet,contentDetails",
+        id: videoId,
+      },
+      (err, response) => {
+        if (err) {
+          res.status(500).send(err);
+          return;
+        }
 
-  youtube.videos.list(
-    {
-      part: "snippet,contentDetails",
-      id: videoId,
-    },
-    (err, response) => {
-      if (err) {
-        res.status(500).send(err);
-        return;
+        if (response.data.items.length > 0) {
+          res.json(response.data.items[0]);
+        } else {
+          res.status(404).send({ message: "Video no encontrado" });
+        }
       }
+    );
+  } catch (error) {
+    try {
+      youtube2.videos.list(
+        {
+          part: "snippet,contentDetails",
+          id: videoId,
+        },
+        (err, response) => {
+          if (err) {
+            res.status(500).send(err);
+            return;
+          }
 
-      if (response.data.items.length > 0) {
-        res.json(response.data.items[0]);
-      } else {
-        res.status(404).send({ message: "Video no encontrado" });
+          if (response.data.items.length > 0) {
+            res.json(response.data.items[0]);
+          } else {
+            res.status(404).send({ message: "Video no encontrado" });
+          }
+        }
+      );
+    } catch (error) {
+      try {
+        youtube2.videos.list(
+          {
+            part: "snippet,contentDetails",
+            id: videoId,
+          },
+          (err, response) => {
+            if (err) {
+              res.status(500).send(err);
+              return;
+            }
+
+            if (response.data.items.length > 0) {
+              res.json(response.data.items[0]);
+            } else {
+              res.status(404).send({ message: "Video no encontrado" });
+            }
+          }
+        );
+      } catch (error) {
+        res.status(404).json({ message: "Video no encontrado" });
       }
     }
-  );
+  }
 });
 
 // Cerrar el navegador al terminar el proceso
