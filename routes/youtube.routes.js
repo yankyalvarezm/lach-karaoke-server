@@ -118,10 +118,48 @@ router.get("/search/videos", async (req, res) => {
   const query = req.query.q;
 
   try {
-    let err;
-    for (let yt of youtubeKeys) {
+    const response = await youtube.search.list({
+      part: "snippet",
+      q: query,
+      type: "video",
+      videoEmbeddable: "true",
+      videoSyndicated: "true",
+      videoLicense: "youtube",
+      maxResults: 20,
+    });
+    const ids = response.data.items.map((video) => video.id.videoId);
+
+    const usableIds = await fetchVideos(ids);
+    const videos = response.data.items.filter((video) =>
+      usableIds.includes(video.id.videoId)
+    );
+    console.log();
+
+    res.json({ items: videos });
+  } catch (err) {
+    // console.error("Error en la búsqueda de videos de YouTube:", err);
+    try {
+      const response = await youtube2.search.list({
+        part: "snippet",
+        q: query,
+        type: "video",
+        videoEmbeddable: "true",
+        videoSyndicated: "true",
+        videoLicense: "youtube",
+        maxResults: 20,
+      });
+      const ids = response.data.items.map((video) => video.id.videoId);
+
+      const usableIds = await fetchVideos(ids);
+      const videos = response.data.items.filter((video) =>
+        usableIds.includes(video.id.videoId)
+      );
+      console.log("Youtube 1 api key Failed, using Youtube 2 api key");
+
+      res.json({ items: videos });
+    } catch (error) {
       try {
-        const response = await yt.search.list({
+        const response = await youtube3.search.list({
           part: "snippet",
           q: query,
           type: "video",
@@ -136,30 +174,19 @@ router.get("/search/videos", async (req, res) => {
         const videos = response.data.items.filter((video) =>
           usableIds.includes(video.id.videoId)
         );
-        console.log();
+        console.log("Youtube 1 and 2 api keys Failed, using Youtube 3 api key");
+
         res.json({ items: videos });
-        break;
       } catch (error) {
-        err = error;
-        continue;
+        console.error("Error en la búsqueda de videos de YouTube:", error);
+
+        res.status(500).json({
+          success: false,
+          message: "Error al realizar la búsqueda en YouTube",
+          error: err.message,
+        });
       }
     }
-
-    console.error(
-      "Error en la búsqueda de videos de YouTube, se acabo toda la quota o hay algun error:",
-      err
-    );
-    res.status(500).json({
-      success: false,
-      message: "Error al realizar la búsqueda en YouTube",
-      error: err.message,
-    });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: "Error al realizar la búsqueda en YouTube",
-      error: err.message,
-    });
   }
 });
 
