@@ -3,7 +3,7 @@ var router = express.Router();
 const { google } = require("googleapis");
 const puppeteer = require("puppeteer");
 const { exec } = require("child_process");
-
+//
 const curlYoutubeCommand = (id, stringToFind) =>
   `curl -s https://www.youtube.com/embed/${id} | grep -E ${stringToFind} | wc -l`;
 
@@ -12,10 +12,7 @@ const fetchVideos = async (ids) => {
 
   const executeCurlCommand = (id) => {
     return new Promise((resolve, reject) => {
-      const command = curlYoutubeCommand(
-        id,
-        "UNPLAYABLE|Video no disponibe|Video unavailable"
-      );
+      const command = curlYoutubeCommand(id, "UNPLAYABLE");
 
       exec(command, (error, stdout, stderr) => {
         if (error) {
@@ -172,11 +169,48 @@ router.get("/video/details", (req, res) => {
   if (!videoId) {
     return res.status(400).send({ message: "Se requiere el ID del video" });
   }
-  let err;
   try {
-    for (let yt of youtubeKeys) {
+    youtube.videos.list(
+      {
+        part: "snippet,contentDetails",
+        id: videoId,
+      },
+      (err, response) => {
+        if (err) {
+          res.status(500).send(err);
+          return;
+        }
+
+        if (response.data.items.length > 0) {
+          res.json(response.data.items[0]);
+        } else {
+          res.status(404).send({ message: "Video no encontrado" });
+        }
+      }
+    );
+  } catch (error) {
+    try {
+      youtube2.videos.list(
+        {
+          part: "snippet,contentDetails",
+          id: videoId,
+        },
+        (err, response) => {
+          if (err) {
+            res.status(500).send(err);
+            return;
+          }
+
+          if (response.data.items.length > 0) {
+            res.json(response.data.items[0]);
+          } else {
+            res.status(404).send({ message: "Video no encontrado" });
+          }
+        }
+      );
+    } catch (error) {
       try {
-        yt.videos.list(
+        youtube2.videos.list(
           {
             part: "snippet,contentDetails",
             id: videoId,
@@ -195,22 +229,9 @@ router.get("/video/details", (req, res) => {
           }
         );
       } catch (error) {
-        err = error;
-        continue;
+        res.status(404).json({ message: "Video no encontrado" });
       }
     }
-
-    res.status(500).json({
-      success: false,
-      message: "Error al realizar la búsqueda en YouTube",
-      error: err.message,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error al realizar la búsqueda en YouTube",
-      error: err.message,
-    });
   }
 });
 
