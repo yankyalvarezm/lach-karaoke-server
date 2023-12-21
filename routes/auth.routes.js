@@ -104,7 +104,7 @@ router.post("/signup/temp-user", (req, res, next) => {
         // Create and sign the token
         const authToken = jwt.sign(payload, process.env.SECRET, {
           algorithm: "HS256",
-          expiresIn: "24h",
+          expiresIn: "10h",
         });
         res.status(200).json({ success: true, authToken, user: payload });
       });

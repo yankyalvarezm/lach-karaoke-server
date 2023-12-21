@@ -26,7 +26,11 @@ const checkVideoExistence = async (videoId) => {
       if (elem) {
         // Aquí simplemente haces console.log del texto interno
         console.log("INNER TEXT:", elem.innerText);
-        return elem && (elem.innerText.includes("Video unavailable") || elem.innerText.includes("Video no disponible")) ;
+        return (
+          elem &&
+          (elem.innerText.includes("Video unavailable") ||
+            elem.innerText.includes("Video no disponible"))
+        );
       } else {
         console.log(
           "No se encontró el elemento con el mensaje de video no disponible."
@@ -78,8 +82,6 @@ router.get("/findVideoIds", async (req, res) => {
   }
 });
 
-
-
 router.post("/add-perform", isAuthenticated, async (req, res) => {
   try {
     const {
@@ -102,7 +104,7 @@ router.post("/add-perform", isAuthenticated, async (req, res) => {
     }
     // Contar perfoms existentes
     const existingPerfomsCount = await Perfom.countDocuments({
-      _id: userId,
+      tempUser: userId,
       session: sessionId,
       isQueue: false,
     });
