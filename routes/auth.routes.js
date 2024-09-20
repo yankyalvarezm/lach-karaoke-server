@@ -21,7 +21,7 @@ const cleanupInterval24h = 24 * 60 * 60 * 1000; // Cleanup every 24 hours
 setInterval(async () => {
   try {
     const expirationTime = new Date(Date.now() - cleanupInterval24h);
-    await TempUser.deleteMany({ createdAt: {$lt: expirationTime}});
+    await TempUser.deleteMany({ createdAt: { $lt: expirationTime } });
   } catch (error) {
     console.error("Error deleting documents:", error);
   }
@@ -227,9 +227,10 @@ router.post("/login", (req, res, next) => {
           .json({ success: false, msg: "Unable to authenticate the user" });
       }
     })
-    .catch((err) =>
-      res.status(500).json({ success: false, msg: "Internal Server Error" })
-    );
+    .catch((err) => {
+      console.log("Login Error ====>>>", err);
+      res.status(500).json({ success: false, msg: "Internal Server Error" });
+    });
 });
 
 router.get("/verify", isAuthenticated, (req, res, next) => {
