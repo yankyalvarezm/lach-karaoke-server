@@ -33,8 +33,6 @@ const fetchVideos = async (ids) => {
           return;
         }
 
-        // console.log('Curl command output:', stdout);
-
         if (Number(stdout) === 0) {
           videos.push(id);
         }
@@ -44,16 +42,12 @@ const fetchVideos = async (ids) => {
     });
   };
 
-  for (const id of ids) {
-    try {
-      await executeCurlCommand(id);
-    } catch (error) {
-      console.error("Error fetching videos:", error);
-    }
-  }
+  // Ejecutamos todos los comandos en paralelo
+  await Promise.all(ids.map(executeCurlCommand));
 
   return videos;
 };
+
 
 // Función para verificar la existencia de un video y eliminar la canción si no está disponible
 const checkVideoExistenceAndDelete = async (videoId) => {
@@ -84,7 +78,7 @@ const checkVideoExistenceAndDelete = async (videoId) => {
         });
 
         if (isUnavailable) {
-            const deletedSong = await Song.findOneAndDelete({ videoId: videoId });
+            const deletedSong = await Songs.findOneAndDelete({ videoId: videoId });
             if (deletedSong) {
                 console.log(`Canción eliminada: ${videoId}`);
             } else {
