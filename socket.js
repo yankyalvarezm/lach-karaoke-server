@@ -18,16 +18,15 @@ const init = (server) => {
   });
 
   io.on("connection", (socket) => {
-
     socket.on("update_session", (data) => {
       // console.log("Socket Session:", data);
     });
 
     socket.on("toggleIsRunning", (data) => {
-      console.log('toggleisRinninug ====>', data.isRunning)
+      console.log("toggleisRinninug ====>", data.isRunning);
       isRunning = data.isRunning;
+      console.log("isRunning ====>>>", data);
       io.emit("toggleIsRunning", data);
-
     });
 
     socket.on("getIsRunning", () => {
