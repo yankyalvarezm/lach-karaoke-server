@@ -17,6 +17,8 @@ var spotifyRouter = require("./routes/spotify.routes");
 var youtubeRouter = require("./routes/youtube.routes");
 var perfomRouter = require("./routes/perfom.routes");
 
+
+
 var app = express();
 
 app.use(logger("dev"));
@@ -33,7 +35,7 @@ app.enable("trust proxy");
 //     origin: "https://cantico.netlify.app",
 //   })
 // );
-
+// recuerda cambiar el origin por el dominio de tu frontend
 app.use(
   cors({
     origin: "https://lach-karaoke.netlify.app", // Cambia esto por el dominio de tu frontend
