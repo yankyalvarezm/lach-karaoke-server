@@ -30,18 +30,16 @@ app.use(express.static(path.join(__dirname, "public")));
 app.set("trust proxy", 1);
 app.enable("trust proxy");
 
+app.use(
+  cors()
+);
+// recuerda cambiar el origin por el dominio de tu frontend
 // app.use(
 //   cors({
-//     origin: "https://cantico.netlify.app",
+//     origin: "https://lach-karaoke.netlify.app", // Cambia esto por el dominio de tu frontend
+//     credentials: true, // Permitir el envío de cookies y credenciales
 //   })
 // );
-// recuerda cambiar el origin por el dominio de tu frontend
-app.use(
-  cors({
-    origin: "https://lach-karaoke.netlify.app", // Cambia esto por el dominio de tu frontend
-    credentials: true, // Permitir el envío de cookies y credenciales
-  })
-);
 app.use("/users", usersRouter);
 app.use("/tempusers", tempUsersRouter);
 app.use("/auth", authRouter);

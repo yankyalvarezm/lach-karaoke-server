@@ -4,16 +4,15 @@ const Fuse = require("fuse.js");
 const Songs = require("../models/Songs.model");
 const isAuthenticated = require("../middleware/isAuthenticated");
 var router = express.Router();
-const path = require('path')
+const path = require("path");
 const { exec } = require("child_process");
-
 
 let globalBrowser;
 (async () => {
-    globalBrowser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+  globalBrowser = await puppeteer.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
 })();
 
 const curlYoutubeCommand = (id, stringToFind) =>
@@ -48,55 +47,60 @@ const fetchVideos = async (ids) => {
   return videos;
 };
 
-
 // Función para verificar la existencia de un video y eliminar la canción si no está disponible
 const checkVideoExistenceAndDelete = async (videoId) => {
-    let page;
+  let page;
 
-    try {
-        page = await globalBrowser.newPage();
+  try {
+    page = await globalBrowser.newPage();
 
-        // Interceptar y desactivar la carga de ciertos tipos de recursos
-        await page.setRequestInterception(true);
-        page.on('request', request => {
-            if (['image', 'stylesheet', 'font'].includes(request.resourceType())) {
-                request.abort();
-            } else {
-                request.continue();
-            }
-        });
+    // Interceptar y desactivar la carga de ciertos tipos de recursos
+    await page.setRequestInterception(true);
+    page.on("request", (request) => {
+      if (["image", "stylesheet", "font"].includes(request.resourceType())) {
+        request.abort();
+      } else {
+        request.continue();
+      }
+    });
 
-        page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
-        await page.goto(`https://www.youtube.com/embed/${videoId}`, { waitUntil: 'domcontentloaded' });
+    page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
+    await page.goto(`https://www.youtube.com/embed/${videoId}`, {
+      waitUntil: "domcontentloaded",
+    });
 
-        const isUnavailable = await page.evaluate(() => {
-            const elem = document.body;
-            if (elem) {
-                console.log("INNER TEXT:", elem.innerText);
-            }
-            return elem && (elem.innerText.includes("Video unavailable") || elem.innerText.includes("Video no disponible"));
-        });
+    const isUnavailable = await page.evaluate(() => {
+      const elem = document.body;
+      if (elem) {
+        console.log("INNER TEXT:", elem.innerText);
+      }
+      return (
+        elem &&
+        (elem.innerText.includes("Video unavailable") ||
+          elem.innerText.includes("Video no disponible"))
+      );
+    });
 
-        if (isUnavailable) {
-            const deletedSong = await Songs.findOneAndDelete({ videoId: videoId });
-            if (deletedSong) {
-                console.log(`Canción eliminada: ${videoId}`);
-            } else {
-                console.log(`No se encontró la canción para eliminar: ${videoId}`);
-            }
-        } else {
-            console.log(`Canción disponible: ${videoId}`);
-        }
-
-        return !isUnavailable;
-    } catch (error) {
-        console.error("Web Scraping Error:", error);
-        return false;
-    } finally {
-        if (page) {
-            await page.close();
-        }
+    if (isUnavailable) {
+      const deletedSong = await Songs.findOneAndDelete({ videoId: videoId });
+      if (deletedSong) {
+        console.log(`Canción eliminada: ${videoId}`);
+      } else {
+        console.log(`No se encontró la canción para eliminar: ${videoId}`);
+      }
+    } else {
+      console.log(`Canción disponible: ${videoId}`);
     }
+
+    return !isUnavailable;
+  } catch (error) {
+    console.error("Web Scraping Error:", error);
+    return false;
+  } finally {
+    if (page) {
+      await page.close();
+    }
+  }
 };
 
 const findVideoIds = async () => {
@@ -110,22 +114,26 @@ const findVideoIds = async () => {
   }
 };
 
-
-
 router.get("/cleanupVideos", async (req, res) => {
   try {
     const videoIds = await findVideoIds();
-    const usableIds = await fetchVideos(videoIds)
-    const iDsToDelete = videoIds.filter(id => !usableIds.includes(id))
-    if(iDsToDelete.length){
-      const deleteResponse = await Songs.deleteMany({ videoId: { $in: iDsToDelete } })
-      console.log("Resultados de la limpieza:", `deleted: ${iDsToDelete}`, `stillAvailable: ${usableIds}`);
+    const usableIds = await fetchVideos(videoIds);
+    const iDsToDelete = videoIds.filter((id) => !usableIds.includes(id));
+    if (iDsToDelete.length) {
+      const deleteResponse = await Songs.deleteMany({
+        videoId: { $in: iDsToDelete },
+      });
+      console.log(
+        "Resultados de la limpieza:",
+        `deleted: ${iDsToDelete}`,
+        `stillAvailable: ${usableIds}`
+      );
     }
     const results = { deleted: iDsToDelete, stillAvailable: usableIds };
-    
+
     // for (const videoId of videoIds) {
     //   const isAvailable = await checkVideoExistenceAndDelete(videoId);
-   // }
+    // }
 
     console.log("Resultados de la limpieza:", results);
     res.status(200).json(results);
@@ -134,7 +142,6 @@ router.get("/cleanupVideos", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
 
 // router.get("/cleanupVideos", async (req, res) => {
 //   try {
@@ -178,14 +185,17 @@ router.get("/", (req, res, next) => {
 
 router.get("/search/:searchTerm", (req, res, next) => {
   const { searchTerm } = req.params;
+  const SEARCH_RESULTS_LIMIT = 10; // Cambia este número para ajustar el límite de resultados
   console.log(searchTerm);
   Songs.find({})
     .then((foundSongs) => {
       if (foundSongs.length) {
         const fuse = new Fuse(foundSongs, { keys: ["title"], threshold: 0.5 });
         const results = fuse.search(searchTerm);
-        const items = results.map(song => song.item)
-        results.length
+        const items = results
+          .map((song) => song.item)
+          .slice(0, SEARCH_RESULTS_LIMIT);
+        items.length
           ? res.status(200).json({ success: true, songs: items })
           : res
               .status(200)
@@ -282,6 +292,31 @@ router.put("/update/:songId", isAuthenticated, (req, res, next) => {
       });
     });
 });
+
+/* PUT given a videoId, update selected song by videoId. */
+router.put("/update-by-videoId/:videoId", isAuthenticated, (req, res, next) => {
+  const { videoId } = req.params;
+  const { title, description, videoDuration, thumbnail } = req.body;
+  Songs.findOneAndUpdate(
+    { videoId: videoId },
+    { title, description, videoId, videoDuration, thumbnail },
+    { new: true }
+  )
+    .then((updatedSong) => {
+      updatedSong
+        ? res.status(200).json({ success: true, song: updatedSong })
+        : res
+            .status(200)
+            .json({ success: true, message: "Failed to update song." });
+    })
+    .catch((error) => {
+      res.status(400).json({
+        success: false,
+        error,
+        message: "Error: Unable update Song by videoId in PUT.",
+      });
+    });
+});
 /* GET home page. */
 router.delete("/delete/:songId", isAuthenticated, (req, res, next) => {
   const { songId } = req.params;
@@ -330,7 +365,5 @@ router.delete("/delete/:songId", isAuthenticated, (req, res, next) => {
 //     }
 //   }
 // };
-
-
 
 module.exports = router;
