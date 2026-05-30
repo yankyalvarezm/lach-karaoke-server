@@ -32,4 +32,6 @@ const perfomSchema = new Schema(
     }
 );
 
+perfomSchema.index({ createdAt: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 7 });
+
 module.exports = model("Perfom", perfomSchema);

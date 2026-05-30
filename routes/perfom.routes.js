@@ -324,6 +324,11 @@ router.put("/update-perfom/:perfomId", isAuthenticated, async (req, res) => {
         .json({ success: false, message: "Perfom no encontrado." });
     }
     io.emit("update_perform", updatedPerfom);
+
+    if (isPlayed === true) {
+      await Perfom.deleteOne({ _id: perfomId });
+    }
+
     res.status(200).json({ success: true, data: updatedPerfom });
   } catch (error) {
     console.error("Error al actualizar el estado del Perfom:", error);
